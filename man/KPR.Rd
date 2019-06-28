@@ -23,9 +23,10 @@ KPR(X, Y, H = diag(nrow(X)), Q = diag(ncol(X)), n.lambda = 200,
 \item{K}{The number of folds in the cross validation search.}
 }
 \value{
-\item{betahat.kpr}{A vector of estimated coefficients}
-\item{lambda.min}{The value of lambda that resulted in the minimun squared error. This value is used to generated the vector of estimated coefficients.}
+\item{betahat}{A matrix of estimated coefficients, where each column corresponds to a different value of lambda.}
 \item{lambda.1se}{The largest value of lambda within one standard error of lambda.min.}
+\item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector. This can be used to retrieve the estimated coefficients corresponding
+to \code{lambda.1se} from the \code{betahat} matrix.}
 }
 \description{
 Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.
