@@ -18,17 +18,19 @@ KPR(X, Y, H = diag(nrow(X)), Q = diag(ncol(X)), n.lambda = 200,
 
 \item{n.lambda}{The number of lambda values to test through the cross validation search. The values are generated internally.}
 
-\item{lambda}{A vector of lambda values to test through cross validation. This will override the sequence generated with the n.lambda parameter.}
+\item{lambda}{A vector of lambda values to test through cross validation. This will override the sequence generated with the \code{n.lambda} parameter.}
 
 \item{K}{The number of folds in the cross validation search.}
 }
 \value{
 \item{betahat}{A matrix of estimated coefficients, where each column corresponds to a different value of lambda.}
-\item{lambda.1se}{The largest value of lambda within one standard error of lambda.min.}
-\item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector. This can be used to retrieve the estimated coefficients corresponding
-to \code{lambda.1se} from the \code{betahat} matrix.}
+\item{lambda}{The vector of lambda values used in cross validation.}
+\item{lambda.min}{The value of lambda that results in the minimum sum of squared errors.}
+\item{lambda.min.index}{The index of \code{lambda.min} in the \code{lambda} vector. This can be used to retrieve the estimated coefficients corresponding
+to \code{lambda.min} from the \code{betahat} matrix.}
+\item{lambda.1se}{The largest value of lambda within one standard error of \code{lambda.min}.}
+\item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector.}
 }
 \description{
 Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.
-The lambda parameter is found through k-folds cross validation.
 }

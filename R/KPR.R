@@ -28,7 +28,7 @@ KPR <- function(X, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
     lambda <- exp(seq(from = 0, to = 10, length.out = n.lambda))
   n.lambda <- length(lambda)
 
-  ERR.QH.KPR <- matrix(nrow = K, ncol = n.lambda)
+  errors <- matrix(nrow = K, ncol = n.lambda)
   randidx <- sample(1:n, n)
   Yrand <- Y[randidx]
   Xrand <- X[randidx, ]
@@ -45,13 +45,13 @@ KPR <- function(X, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
       beta.QH.KPR <- Q %*% solve( t(Xtrain) %*% Htrain %*% Xtrain %*% Q  + lambda[j] * diag(p)) %*% t(Xtrain) %*% Htrain %*% Ytrain
 
       y.QH.KPR <- Xtest %*% beta.QH.KPR
-      ERR.QH.KPR[k, j] <- t(Ytest - y.QH.KPR) %*% Htest %*%  (Ytest - y.QH.KPR) # sum((Ytest - y.QH.KPR)^2)
+      errors[k, j] <- t(Ytest - y.QH.KPR) %*% Htest %*%  (Ytest - y.QH.KPR) # sum((Ytest - y.QH.KPR)^2)
     }
   }
-  CVidx.QH.KPR <- which.min(colSums(ERR.QH.KPR))
+  CVidx.QH.KPR <- which.min(colSums(errors))
 
-  se.QH.KPR <- sd(ERR.QH.KPR[, CVidx.QH.KPR]) * sqrt(K)
-  CVidx.QH.KPR1se <- which(colSums(ERR.QH.KPR) < min(colSums(ERR.QH.KPR)) + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
+  se.QH.KPR <- sd(errors[, CVidx.QH.KPR]) * sqrt(K)
+  CVidx.QH.KPR1se <- which(colSums(errors) < min(colSums(errors)) + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
 
   beta.kpr <- sapply(lambda, FUN = function(s) {
       Q %*% solve( t(X) %*% H %*% X %*% Q  + s * diag(p)) %*% t(X) %*% H %*% Y
@@ -65,6 +65,6 @@ KPR <- function(X, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
               lambda.min = lambda[CVidx.QH.KPR],
               lambda.min.index = CVidx.QH.KPR,
               lambda.1se = max(lambda[CVidx.QH.KPR1se]),
-              lambda.1se.index = which.max(lambda[CVidx.QH.KPR1se]))
+              lambda.1se.index = which.max(lambda[CVidx.QH.KPR1se])))
 
 }
