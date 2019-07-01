@@ -4,11 +4,13 @@
 \alias{KPR}
 \title{Kernel Penalized Regression}
 \usage{
-KPR(X, Y, H = diag(nrow(X)), Q = diag(ncol(X)), n.lambda = 200,
-  lambda, K = 5)
+KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
+  Q = diag(ncol(designMatrix)), n.lambda = 200, lambda, K = 5)
 }
 \arguments{
-\item{X}{An n x p data matrix. Should be scaled and centered.}
+\item{designMatrix}{An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.}
+
+\item{covariates}{An n x r data matrix, consisting of variables that should not be penalized. Should be scaled and centered.}
 
 \item{Y}{An n x 1 response vector. Should be scaled and centered.}
 

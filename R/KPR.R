@@ -2,7 +2,8 @@
 #'
 #' Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.
 #'
-#' @param X An n x p data matrix. Should be scaled and centered.
+#' @param designMatrix An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.
+#' @param covariates An n x r data matrix, consisting of variables that should not be penalized. Should be scaled and centered.
 #' @param Y An n x 1 response vector. Should be scaled and centered.
 #' @param H An n x n sample similarity kernel. Must be symmetric and positive semidefinite. This defaults to an identity matrix.
 #' @param Q A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.
@@ -19,11 +20,13 @@
 #' \item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector.}
 #' @importFrom stats sd
 #' @export
-KPR <- function(X, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
+KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
                 n.lambda = 200, lambda, K = 5)
 {
-  n <- nrow(X)
-  p <- ncol(X)
+  X <- cbind(designMatrix, covariates) # X is now n x (p + r)
+  n <- nrow(designMatrix)
+  p <- ncol(designMatrix) # number of penalized variables
+  r <- ncol(covariates) # number of penalized variables
   if(missing(lambda))
     lambda <- exp(seq(from = 0, to = 10, length.out = n.lambda))
   n.lambda <- length(lambda)
@@ -40,12 +43,19 @@ KPR <- function(X, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
       Xtrain <- Xrand[-((n / K * (k - 1) + 1):(n / K * k)), ]
       Xtest <- Xrand[((n / K * (k - 1) + 1):(n / K * k)), ]
       Htrain <- Hrand[-((n / K * (k - 1) + 1):(n / K * k)), -((n / K * (k - 1) + 1):(n / K * k))]
-      Htest <- Hrand[  ((n / K * (k - 1) + 1):(n / K * k)),  ((n / K * (k - 1) + 1):(n / K * k))] #needed?
+      Htest <- Hrand[  ((n / K * (k - 1) + 1):(n / K * k)),  ((n / K * (k - 1) + 1):(n / K * k))]
 
-      beta.QH.KPR <- Q %*% solve( t(Xtrain) %*% Htrain %*% Xtrain %*% Q  + lambda[j] * diag(p)) %*% t(Xtrain) %*% Htrain %*% Ytrain
+      P <- diag(nrow(Xtrain)) - (Xtrain[,-(1:p)] %*% solve( t(Xtrain[,-(1:p)]) %*% Htrain %*% Xtrain[,-(1:p)] ) %*% t(Xtrain[,-(1:p)]) %*% Htrain)
+      Y.p <- P %*% Ytrain
+      Z.p <- P %*% Xtrain[,(1:p)] # apply P to the variables that should be penalized
 
-      y.QH.KPR <- Xtest %*% beta.QH.KPR
-      errors[k, j] <- t(Ytest - y.QH.KPR) %*% Htest %*%  (Ytest - y.QH.KPR) # sum((Ytest - y.QH.KPR)^2)
+      beta.p <- Q %*% solve( t(Z.p) %*% Htrain %*% Z.p %*% Q + lambda[j] * diag(p) ) %*% t(Z.p) %*% Htrain %*% Y.p # penalized coefficients
+      beta.r <- solve(t(Xtrain[,-(1:p)]) %*% Htrain %*% Xtrain[,-(1:p)]) %*% t(Xtrain[,-(1:p)]) %*% Htrain %*% (Ytrain - Xtrain[,1:p] %*% beta.p) # unpenalized coefficients
+
+      betahat <- c(beta.p, beta.r)
+
+      yhat <- Xtest %*% betahat
+      errors[k, j] <- t(Ytest - yhat) %*% Htest %*%  (Ytest - yhat)
     }
   }
   CVidx.QH.KPR <- which.min(colSums(errors))
@@ -54,13 +64,20 @@ KPR <- function(X, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
   CVidx.QH.KPR1se <- which(colSums(errors) < min(colSums(errors)) + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
 
   beta.kpr <- sapply(lambda, FUN = function(s) {
-      Q %*% solve( t(X) %*% H %*% X %*% Q  + s * diag(p)) %*% t(X) %*% H %*% Y
+      P <- diag(n) - X[,-(1:p)] %*% solve(t(X[,-(1:p)]) %*% H %*% X[,-(1:p)]) %*% t(X[,-(1:p)]) %*% H
+      Y.p <- P %*% Y
+      Z.p <- P %*% X[,(1:p)] # apply P to the variables that should be penalized
+
+      beta.p <- Q %*% solve( t(Z.p) %*% H %*% Z.p %*% Q + s * diag(p) ) %*% t(Z.p) %*% H %*% Y.p # penalized coefficients
+      beta.r <- solve(t(X[,-(1:p)]) %*% H %*% X[,-(1:p)]) %*% t(X[,-(1:p)]) %*% H %*% (Y - X[,1:p] %*% beta.p)
+      c(beta.p, beta.r)
   })
 
   if (length(lambda) == 1) beta.kpr <- as.vector(beta.kpr) # if only one lambda was given, just return a vector rather than a matrix
 
   rownames(beta.kpr) <- colnames(X)
-  return(list(betahat = beta.kpr,
+  return(list(betahat.penalized = beta.kpr[1:p,],
+              betahat.unpenalized = beta.kpr[-(1:p),],
               lambda = lambda,
               lambda.min = lambda[CVidx.QH.KPR],
               lambda.min.index = CVidx.QH.KPR,
