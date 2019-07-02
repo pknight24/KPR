@@ -97,14 +97,15 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   rownames(eta.hat) <- colnames(U)
   if (all(eta.hat == rep(0,length(lambda)))) eta.hat <- NULL
 
-
-
-  return(list(beta.hat = beta.hat,
+  output <- list(beta.hat = beta.hat,
               eta.hat = eta.hat,
               lambda = lambda,
               lambda.min = lambda.min,
               lambda.min.index = lambda.min.index,
               lambda.1se = lambda.1se,
-              lambda.1se.index = lambda.1se.index))
+              lambda.1se.index = lambda.1se.index)
+  class(output) <- "KPR"
+
+  return(output)
 
 }
