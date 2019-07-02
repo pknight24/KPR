@@ -11,7 +11,8 @@
 #' @param lambda A vector of lambda values to test through cross validation. This will override the sequence generated with the \code{n.lambda} parameter.
 #' @param K The number of folds in the cross validation search.
 #' @return
-#' \item{betahat}{A matrix of estimated coefficients, where each column corresponds to a different value of lambda.}
+#' \item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
+#' \item{eta.hat}{A matrix of estimated coefficients for the unpenalized variables, where each column corresponds to a different value of lambda.}
 #' \item{lambda}{The vector of lambda values used in cross validation.}
 #' \item{lambda.min}{The value of lambda that results in the minimum sum of squared errors.}
 #' \item{lambda.min.index}{The index of \code{lambda.min} in the \code{lambda} vector. This can be used to retrieve the estimated coefficients corresponding
@@ -23,10 +24,13 @@
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
                 n.lambda = 200, lambda, K = 5)
 {
-  X <- cbind(designMatrix, covariates) # X is now n x (p + r)
-  n <- nrow(designMatrix)
-  p <- ncol(designMatrix) # number of penalized variables
-  r <- ncol(covariates) # number of penalized variables
+  cov.missing <- missing(covariates)
+  Z <- designMatrix # penalized matrix
+  n <- nrow(Z)
+  p <- ncol(Z) # number of penalized variables
+  if (cov.missing) U <- matrix(0, n) # arbitrarily set U to a zero vector if no covariates are given
+  else U <- as.matrix(covariates)
+
   if(missing(lambda))
     lambda <- exp(seq(from = 0, to = 10, length.out = n.lambda))
   n.lambda <- length(lambda)
@@ -34,54 +38,73 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   errors <- matrix(nrow = K, ncol = n.lambda)
   randidx <- sample(1:n, n)
   Yrand <- Y[randidx]
-  Xrand <- X[randidx, ]
+  Zrand <- Z[randidx, ]
+  Urand <- as.matrix(U[randidx, ])
   Hrand <- H[randidx, randidx]
   for(j in 1:n.lambda){
     for(k in 1:K){
       Ytrain <- Yrand[-((n / K * (k - 1) + 1):(n / K * k))]
       Ytest <- Yrand[((n / K * (k - 1) + 1):(n / K * k))]
-      Xtrain <- Xrand[-((n / K * (k - 1) + 1):(n / K * k)), ]
-      Xtest <- Xrand[((n / K * (k - 1) + 1):(n / K * k)), ]
+      Ztrain <- Zrand[-((n / K * (k - 1) + 1):(n / K * k)), ]
+      Ztest <- Zrand[((n / K * (k - 1) + 1):(n / K * k)), ]
+      Utrain <- Urand[-((n / K * (k - 1) + 1):(n / K * k)), ]
+      Utest <- Urand[((n / K * (k - 1) + 1):(n / K * k)), ]
       Htrain <- Hrand[-((n / K * (k - 1) + 1):(n / K * k)), -((n / K * (k - 1) + 1):(n / K * k))]
       Htest <- Hrand[  ((n / K * (k - 1) + 1):(n / K * k)),  ((n / K * (k - 1) + 1):(n / K * k))]
 
-      P <- diag(nrow(Xtrain)) - (Xtrain[,-(1:p)] %*% solve( t(Xtrain[,-(1:p)]) %*% Htrain %*% Xtrain[,-(1:p)] ) %*% t(Xtrain[,-(1:p)]) %*% Htrain)
+      n.train <- nrow(Ztrain)
+
+      if (cov.missing) P <- diag(n.train)
+      else P <- diag(n.train) - (Utrain %*% solve( t(Utrain) %*% Htrain %*% Utrain ) %*% t(Utrain) %*% Htrain)
       Y.p <- P %*% Ytrain
-      Z.p <- P %*% Xtrain[,(1:p)] # apply P to the variables that should be penalized
+      Z.p <- P %*% Ztrain
 
-      beta.p <- Q %*% solve( t(Z.p) %*% Htrain %*% Z.p %*% Q + lambda[j] * diag(p) ) %*% t(Z.p) %*% Htrain %*% Y.p # penalized coefficients
-      beta.r <- solve(t(Xtrain[,-(1:p)]) %*% Htrain %*% Xtrain[,-(1:p)]) %*% t(Xtrain[,-(1:p)]) %*% Htrain %*% (Ytrain - Xtrain[,1:p] %*% beta.p) # unpenalized coefficients
+      beta.hat <- Q %*% solve( t(Z.p) %*% Htrain %*% Z.p %*% Q + lambda[j] * diag(p) ) %*% t(Z.p) %*% Htrain %*% Y.p # penalized coefficients
+      if (cov.missing) eta.hat <- 0
+      else eta.hat <- solve(t(Utrain) %*% Htrain %*% Utrain) %*% t(Utrain) %*% Htrain %*% (Ytrain - Ztrain %*% beta.hat) # unpenalized coefficients
 
-      betahat <- c(beta.p, beta.r)
+      coefficients <- c(beta.hat, eta.hat)
+      Xtest <- cbind(Ztest, Utest)
 
-      yhat <- Xtest %*% betahat
+      yhat <- Xtest %*% coefficients
       errors[k, j] <- t(Ytest - yhat) %*% Htest %*%  (Ytest - yhat)
     }
   }
-  CVidx.QH.KPR <- which.min(colSums(errors))
+  lambda.min.index <- which.min(colSums(errors))
+  lambda.min <- lambda[lambda.min.index]
 
-  se.QH.KPR <- sd(errors[, CVidx.QH.KPR]) * sqrt(K)
-  CVidx.QH.KPR1se <- which(colSums(errors) < min(colSums(errors)) + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
+  se.QH.KPR <- sd(errors[, lambda.min.index]) * sqrt(K)
+  lambda.1se.indices <- which(colSums(errors) < lambda.min + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
 
-  beta.kpr <- sapply(lambda, FUN = function(s) {
-      P <- diag(n) - X[,-(1:p)] %*% solve(t(X[,-(1:p)]) %*% H %*% X[,-(1:p)]) %*% t(X[,-(1:p)]) %*% H
+  lambda.1se <- max(lambda[lambda.1se.indices])
+  lambda.1se.index <- which(lambda == lambda.1se)
+
+  estimates <- sapply(lambda, FUN = function(s) {
+      if (cov.missing) P <- diag(n)
+      else P <- diag(n) - U %*% solve(t(U) %*% H %*% U) %*% t(U) %*% H
       Y.p <- P %*% Y
-      Z.p <- P %*% X[,(1:p)] # apply P to the variables that should be penalized
+      Z.p <- P %*% Z # apply P to the variables that should be penalized
 
-      beta.p <- Q %*% solve( t(Z.p) %*% H %*% Z.p %*% Q + s * diag(p) ) %*% t(Z.p) %*% H %*% Y.p # penalized coefficients
-      beta.r <- solve(t(X[,-(1:p)]) %*% H %*% X[,-(1:p)]) %*% t(X[,-(1:p)]) %*% H %*% (Y - X[,1:p] %*% beta.p)
-      c(beta.p, beta.r)
+      beta.hat <- Q %*% solve( t(Z.p) %*% H %*% Z.p %*% Q + s * diag(p) ) %*% t(Z.p) %*% H %*% Y.p # penalized coefficients
+      if (cov.missing) eta.hat <- 0
+      else eta.hat <- solve(t(U) %*% H %*% U) %*% t(U) %*% H %*% (Y - Z %*% beta.hat)
+      c(beta.hat, eta.hat)
   })
+  beta.hat <- estimates[1:p,]
+  eta.hat <- estimates[-(1:p),]
 
-  if (length(lambda) == 1) beta.kpr <- as.vector(beta.kpr) # if only one lambda was given, just return a vector rather than a matrix
+  rownames(beta.hat) <- colnames(Z)
+  rownames(eta.hat) <- colnames(U)
+  if (all(eta.hat == rep(0,length(lambda)))) eta.hat <- NULL
 
-  rownames(beta.kpr) <- colnames(X)
-  return(list(betahat.penalized = beta.kpr[1:p,],
-              betahat.unpenalized = beta.kpr[-(1:p),],
+
+
+  return(list(beta.hat = beta.hat,
+              eta.hat = eta.hat,
               lambda = lambda,
-              lambda.min = lambda[CVidx.QH.KPR],
-              lambda.min.index = CVidx.QH.KPR,
-              lambda.1se = max(lambda[CVidx.QH.KPR1se]),
-              lambda.1se.index = which.max(lambda[CVidx.QH.KPR1se])))
+              lambda.min = lambda.min,
+              lambda.min.index = lambda.min.index,
+              lambda.1se = lambda.1se,
+              lambda.1se.index = lambda.1se.index))
 
 }

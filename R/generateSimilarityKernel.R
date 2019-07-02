@@ -18,7 +18,7 @@ generateSimilarityKernel <- function(D)
   else
   {
     cat("\nSetting negative eigenvalues to 0\n")
-    eigen.M$values[eigen.M$values < 0 ] <- 0
+    eigen.M$values[eigen.M$values < 0 ] <- 10^-10
     M <- eigen.M$vectors %*% diag(eigen.M$values) %*% t(eigen.M$vectors)
     return(M)
   }
