@@ -25,7 +25,8 @@ KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
 \item{K}{The number of folds in the cross validation search.}
 }
 \value{
-\item{betahat}{A matrix of estimated coefficients, where each column corresponds to a different value of lambda.}
+\item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
+\item{eta.hat}{A matrix of estimated coefficients for the unpenalized variables, where each column corresponds to a different value of lambda.}
 \item{lambda}{The vector of lambda values used in cross validation.}
 \item{lambda.min}{The value of lambda that results in the minimum sum of squared errors.}
 \item{lambda.min.index}{The index of \code{lambda.min} in the \code{lambda} vector. This can be used to retrieve the estimated coefficients corresponding
