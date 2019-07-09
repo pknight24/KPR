@@ -28,8 +28,8 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   Z <- designMatrix # penalized matrix
   n <- nrow(Z)
   p <- ncol(Z) # number of penalized variables
-  if (cov.missing) U <- matrix(0, n) # arbitrarily set U to a zero vector if no covariates are given
-  else U <- as.matrix(covariates)
+  if (cov.missing) E <- matrix(0, n) # arbitrarily set E to a zero vector if no covariates are given
+  else E <- as.matrix(covariates)
 
   if(missing(lambda))
     lambda <- exp(seq(from = 0, to = 10, length.out = n.lambda))
@@ -39,7 +39,7 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   randidx <- sample(1:n, n)
   Yrand <- Y[randidx]
   Zrand <- Z[randidx, ]
-  Urand <- as.matrix(U[randidx, ])
+  Erand <- as.matrix(E[randidx, ])
   Hrand <- H[randidx, randidx]
   for(j in 1:n.lambda){
     for(k in 1:K){
@@ -47,24 +47,24 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
       Ytest <- Yrand[((n / K * (k - 1) + 1):(n / K * k))]
       Ztrain <- Zrand[-((n / K * (k - 1) + 1):(n / K * k)), ]
       Ztest <- Zrand[((n / K * (k - 1) + 1):(n / K * k)), ]
-      Utrain <- Urand[-((n / K * (k - 1) + 1):(n / K * k)), ]
-      Utest <- Urand[((n / K * (k - 1) + 1):(n / K * k)), ]
+      Etrain <- Erand[-((n / K * (k - 1) + 1):(n / K * k)), ]
+      Etest <- Erand[((n / K * (k - 1) + 1):(n / K * k)), ]
       Htrain <- Hrand[-((n / K * (k - 1) + 1):(n / K * k)), -((n / K * (k - 1) + 1):(n / K * k))]
       Htest <- Hrand[  ((n / K * (k - 1) + 1):(n / K * k)),  ((n / K * (k - 1) + 1):(n / K * k))]
 
       n.train <- nrow(Ztrain)
 
       if (cov.missing) P <- diag(n.train)
-      else P <- diag(n.train) - (Utrain %*% solve( t(Utrain) %*% Htrain %*% Utrain ) %*% t(Utrain) %*% Htrain)
+      else P <- diag(n.train) - (Etrain %*% solve( t(Etrain) %*% Htrain %*% Etrain ) %*% t(Etrain) %*% Htrain)
       Y.p <- P %*% Ytrain
       Z.p <- P %*% Ztrain
 
       beta.hat <- Q %*% solve( t(Z.p) %*% Htrain %*% Z.p %*% Q + lambda[j] * diag(p) ) %*% t(Z.p) %*% Htrain %*% Y.p # penalized coefficients
       if (cov.missing) eta.hat <- 0
-      else eta.hat <- solve(t(Utrain) %*% Htrain %*% Utrain) %*% t(Utrain) %*% Htrain %*% (Ytrain - Ztrain %*% beta.hat) # unpenalized coefficients
+      else eta.hat <- solve(t(Etrain) %*% Htrain %*% Etrain) %*% t(Etrain) %*% Htrain %*% (Ytrain - Ztrain %*% beta.hat) # unpenalized coefficients
 
       coefficients <- c(beta.hat, eta.hat)
-      Xtest <- cbind(Ztest, Utest)
+      Xtest <- cbind(Ztest, Etest)
 
       yhat <- Xtest %*% coefficients
       errors[k, j] <- t(Ytest - yhat) %*% Htest %*%  (Ytest - yhat)
@@ -81,23 +81,31 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
 
   estimates <- sapply(lambda, FUN = function(s) {
       if (cov.missing) P <- diag(n)
-      else P <- diag(n) - U %*% solve(t(U) %*% H %*% U) %*% t(U) %*% H
+      else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
       Y.p <- P %*% Y
       Z.p <- P %*% Z # apply P to the variables that should be penalized
 
       beta.hat <- Q %*% solve( t(Z.p) %*% H %*% Z.p %*% Q + s * diag(p) ) %*% t(Z.p) %*% H %*% Y.p # penalized coefficients
       if (cov.missing) eta.hat <- 0
-      else eta.hat <- solve(t(U) %*% H %*% U) %*% t(U) %*% H %*% (Y - Z %*% beta.hat)
+      else eta.hat <- solve(t(E) %*% H %*% E) %*% t(E) %*% H %*% (Y - Z %*% beta.hat)
       c(beta.hat, eta.hat)
   })
   beta.hat <- estimates[1:p,]
   eta.hat <- estimates[-(1:p),]
 
   rownames(beta.hat) <- colnames(Z)
-  rownames(eta.hat) <- colnames(U)
-  if (all(eta.hat == rep(0,length(lambda)))) eta.hat <- NULL
+  rownames(eta.hat) <- colnames(E)
 
-  output <- list(beta.hat = beta.hat,
+  if (all(eta.hat == rep(0,length(lambda)))) eta.hat <- NULL
+  if (all(E == matrix(0, n))) E <- NULL
+
+
+  output <- list(Z = Z,
+              E = E,
+              Y = Y,
+              H = H,
+              Q = Q,
+              beta.hat = beta.hat,
               eta.hat = eta.hat,
               lambda = lambda,
               lambda.min = lambda.min,

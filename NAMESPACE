@@ -3,4 +3,6 @@
 export(KPR)
 export(aitchisenVariation)
 export(generateSimilarityKernel)
+export(inference)
+importFrom(natural,olasso_cv)
 importFrom(stats,sd)
