@@ -5,7 +5,7 @@ inference <- function(KPR.output, method = "GMD", ...)
   if (method == "GMD") GMD.inference(KPR.output, ...)
 }
 
-GMD.inference <- function(KPR.output, mu, r, weight = TRUE, numComponents = 10)
+GMD.inference <- function(KPR.output, mu = 1, r = 0.5, weight = TRUE, numComponents = 10)
 {
   Z <- KPR.output$Z
   E <- KPR.output$E # for now, we will ignore the E matrix
@@ -59,35 +59,46 @@ GMD.inference <- function(KPR.output, mu, r, weight = TRUE, numComponents = 10)
   }
 
   beta.init = as.numeric(vectors.Q%*%beta.glasso)
-  return(beta.init) # beta.init is being computed without issues
 
-  # TODO: figure out how to incorporate W.long, so that we can keep track of the estimates at each provided lambda value
+  Xi.long <- sapply(1:length(lambda), FUN=function(s){ # each column is a lambda value, each row is a Xi value
+    diag(Q%*%V%*%diag(W.long[,s])%*%t(V))
+  })
 
-  Xi <- diag(Q%*%V%*%diag(W)%*%t(V))
-  bias.hat <- Q%*%V%*%diag(W)%*%t(V)%*%beta.init - (1 - mu)*Xi*beta.init - mu*beta.init
-  beta.hat <- beta.hat.uncorrected  - bias.hat
+  bias.hat <- sapply(1:length(lambda), FUN=function(s){
+    Q%*%V%*%diag(W.long[,s])%*%t(V)%*%beta.init - (1 - mu)*Xi.long[,s]*beta.init - mu*beta.init
+  })
+  beta.hat.cor <- beta.hat.uncorrected  - bias.hat
+
 
   # covariance
-  cov.hat = sigmaepsi.hat^2*Q%*%V%*%diag(D^(-2)*W*W)%*%t(V)%*%Q
-  diag.cov.hat = diag(cov.hat)
-  bound.mat = (Q%*%V%*%diag(W)%*%t(V) - (1- mu)*diag(Xi) - mu*diag(rep(1,p)))%*%L.Q
-  bound.hat = apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
-  # print(bound.hat)
+  diag.cov.hat.long <- sapply(1:length(lambda),function(s){
+    diag(sigmaepsi.hat^2*Q%*%V%*%diag(S^(-2)*W.long[,s]*W.long[,s])%*%t(V)%*%Q)
+  })
+
+  bound.hat.long <- sapply(1:length(lambda), function(s){
+    bound.mat <- (Q%*%V%*%diag(W.long[,s])%*%t(V) - (1- mu)*diag(Xi.long[,s]) - mu*diag(rep(1,p)))%*%L.Q
+    apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
+  })
 
   # p-value
-  beta.temp = abs(beta.hat) - bound.hat
-  p.vec = rep(0,p)
-  for(i in 1:p){
-    # print(beta.temp)
+  p.mat <- sapply(1:length(lambda), function(s){
+    beta.temp = abs(beta.hat.cor[,s]) - bound.hat.long[,s]
+    p.vec = rep(0,p)
+    for(i in 1:p){
+      # print(beta.temp)
 
-    if(beta.temp[i] > 0){p.vec[i] = 2*(1 - pnorm(beta.temp[i]/sqrt(diag.cov.hat[i])))}
-    if(beta.temp[i] <= 0){p.vec[i] = 1}
+      if(beta.temp[i] > 0){p.vec[i] = 2*(1 - pnorm(beta.temp[i]/sqrt(diag.cov.hat.long[i,s])))}
+      if(beta.temp[i] <= 0){p.vec[i] = 1}
 
-  }
-  names(p.vec) <- colnames(X)
-  return(p.vec)
+    }
+    return(p.vec)
+  })
 
+  rownames(p.mat) <- colnames(Z)
+
+  return(p.mat)
 }
+
 
 GMD <- function(X, H, Q, K)
 {
