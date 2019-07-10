@@ -8,7 +8,7 @@ inference <- function(KPR.output, method = "GMD", ...)
   if (method == "GMD") GMD.inference(KPR.output, ...)
 }
 
-GMD.inference <- function(KPR.output, mu = 1, r = 0.5, weight = TRUE, numComponents = 10)
+GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numComponents = 10)
 {
   Z <- KPR.output$Z
   E <- KPR.output$E # for now, we will ignore the E matrix
