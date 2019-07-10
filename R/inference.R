@@ -1,4 +1,7 @@
+#' Inference for Kernel Penalized Regression models
+#'
 #' @importFrom natural olasso_cv
+#' @importFrom glmnet glmnet cv.glmnet
 #' @export
 inference <- function(KPR.output, method = "GMD", ...)
 {
