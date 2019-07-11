@@ -19,7 +19,8 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
   else lambda <- KPR.output$lambda
   n <- dim(Z)[1]
   p <- dim(Z)[2]
-  beta.hat.uncorrected = KPR.output$beta.hat # before correction
+  if (use.default.lambda) beta.hat.uncorrected <- KPR.output$beta.hat[,c(KPR.output$lamba.min.index, KPR.output$lambda.1se.index)]
+  else beta.hat.uncorrected <- KPR.output$beta.hat # before correction
 
 
   gmd.out <- GMD(X = Z, H = H, Q = Q, K = numComponents)
