@@ -74,16 +74,16 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
 
 
   # covariance
-  diag.cov.hat.long <- sapply(1:length(lambda),function(s){
+  diag.cov.hat.long <- sapply(1:length(lambda),function(s){ # this finds the value of Sigma_jj * sigmaepsi_hat^2, used in the calculation of the p values
     diag(sigmaepsi.hat^2*Q%*%V%*%diag(S^(-2)*W.long[,s]*W.long[,s])%*%t(V)%*%Q)
   })
 
-  bound.hat.long <- sapply(1:length(lambda), function(s){
+  bound.hat.long <- sapply(1:length(lambda), function(s){ # each column is a lambda value, each row j is the value of Psi_j (defined in Thm 3.1)
     bound.mat <- (Q%*%V%*%diag(W.long[,s])%*%t(V) - (1- mu)*diag(Xi.long[,s]) - mu*diag(rep(1,p)))%*%L.Q
     apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
   })
 
-  # p-value
+  # p-values compuated as given in 3.6
   p.mat <- sapply(1:length(lambda), function(s){
     beta.temp = abs(beta.hat.cor[,s]) - bound.hat.long[,s]
     p.vec = rep(0,p)
