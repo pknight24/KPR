@@ -74,7 +74,7 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   lambda.min <- lambda[lambda.min.index]
 
   se.QH.KPR <- sd(errors[, lambda.min.index]) * sqrt(K)
-  lambda.1se.indices <- which(colSums(errors) < lambda.min + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
+  lambda.1se.indices <- which(colSums(errors) < sum(errors[,lambda.min.index]) + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
 
   lambda.1se <- max(lambda[lambda.1se.indices])
   lambda.1se.index <- which(lambda == lambda.1se)

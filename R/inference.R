@@ -8,14 +8,15 @@ inference <- function(KPR.output, method = "GMD", ...)
   if (method == "GMD") GMD.inference(KPR.output, ...)
 }
 
-GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numComponents = 10)
+GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numComponents = 10, use.default.lambda = TRUE)
 {
   Z <- KPR.output$Z
   E <- KPR.output$E # for now, we will ignore the E matrix
   Y <- KPR.output$Y
   H <- KPR.output$H
   Q <- KPR.output$Q
-  lambda <- KPR.output$lambda
+  if (use.default.lambda) lambda <- c(KPR.output$lambda.min, KPR.output$lambda.1se)
+  else lambda <- KPR.output$lambda
   n <- dim(Z)[1]
   p <- dim(Z)[2]
   beta.hat.uncorrected = KPR.output$beta.hat # before correction
@@ -98,6 +99,7 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
   })
 
   rownames(p.mat) <- colnames(Z)
+  if (use.default.lambda) colnames(p.mat) <- c("lambda.min", "lambda.1se")
 
   return(p.mat)
 }
