@@ -43,7 +43,7 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   Zrand <- Z[randidx, ]
   Erand <- as.matrix(E[randidx, ])
   Hrand <- H[randidx, randidx]
-  if (useCpp) computeErrorMatrix(Zrand, Erand, Yrand, Hrand, Q, lambda, K)
+  if (useCpp) print(str(computeErrorMatrix(Zrand, Erand, Yrand, Hrand, Q, lambda, K)))
   for(j in 1:n.lambda){
     for(k in 1:K){
       Ytrain <- Yrand[-((n / K * (k - 1) + 1):(n / K * k))]

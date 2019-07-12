@@ -10,6 +10,20 @@ NumericMatrix computeErrorMatrix(NumericMatrix Zrand,
                                  NumericVector lambda,
                                  int K)
 {
-    Rcout << Zrand.ncol() << "\n";
-    return Zrand;
+    int n = Zrand.nrow();
+    int p = Zrand.ncol();
+    int n_lambda = lambda.size();
+
+    NumericMatrix errors(K, n_lambda);
+    for (int j = 0; j < n_lambda; j++)
+    {
+      for (int k = 0; k < K; k++)
+      {
+        // NumericVector
+        // NumericVector Ytrain = Yrand[]
+
+      }
+    }
+
+    return errors;
 }

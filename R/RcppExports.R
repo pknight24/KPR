@@ -2,6 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 computeErrorMatrix <- function(Zrand, Erand, Yrand, Hrand, Q, lambda, K) {
-    .Call('_KPR_computeErrorMatrix', PACKAGE = 'KPR', Zrand, Erand, Yrand, Hrand, Q, lambda, K)
+    .Call(`_KPR_computeErrorMatrix`, Zrand, Erand, Yrand, Hrand, Q, lambda, K)
 }
 
