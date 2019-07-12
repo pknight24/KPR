@@ -3,6 +3,7 @@
 #' Computes Aitchisen's variation matrix from a matrix X
 #' @param X An n x p data matrix.
 #' @return A p x p Aitchisen variation matrix.
+#' @importFrom stats var
 #' @export
 aitchisenVariation <- function(X)
 {

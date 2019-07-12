@@ -6,6 +6,7 @@
 #' @param method A string specifying the inference method to use.
 #' @importFrom natural olasso_cv
 #' @importFrom glmnet glmnet cv.glmnet
+#' @importFrom stats pnorm
 #' @export
 inference <- function(KPR.output, method = "GMD", ...)
 {
@@ -31,7 +32,7 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
 
   U <- gmd.out$U
   V <- gmd.out$V
-  S <- gmd.out$D
+  S <- gmd.out$S
 
   W.long <- sapply(lambda, function(lam){ # each column corresponds to a value of lambda, each row corresponds to a diagonal value in the W matrix
     sapply(S, function(s) s^2 / (s^2 + lam)^2)
@@ -108,7 +109,16 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
   return(p.mat)
 }
 
-
+#' Generalized Matrix Decomposition
+#'
+#' Computes the generalized matrix decomposition of a matrix X with respect to H and Q.
+#'
+#' @param X An n x p data matrix.
+#' @param H An n x n sample-wise similarity kernel.
+#' @param Q A p x p variable-wise similarity kernel.
+#' @param K The number of GMD components to include in the decomposition.
+#' @return A list of matrices involved in the decomposition.
+#' @export
 GMD <- function(X, H, Q, K)
 {
   n = dim(X)[1]
@@ -151,7 +161,7 @@ GMD <- function(X, H, Q, K)
 
   }
 
-  return(list(U = U, V = V, D = D, H = H, Q = Q))
+  return(list(U = U, V = V, S = D, H = H, Q = Q))
 
 }
 
