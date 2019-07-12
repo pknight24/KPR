@@ -90,7 +90,6 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
     beta.temp = abs(beta.hat.cor[,s]) - bound.hat.long[,s]
     p.vec = rep(0,p)
     for(i in 1:p){
-      # print(beta.temp)
 
       if(beta.temp[i] > 0){p.vec[i] = 2*(1 - pnorm(beta.temp[i]/sqrt(diag.cov.hat.long[i,s])))}
       if(beta.temp[i] <= 0){p.vec[i] = 1}
