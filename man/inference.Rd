@@ -6,6 +6,11 @@
 \usage{
 inference(KPR.output, method = "GMD", ...)
 }
+\arguments{
+\item{KPR.output}{The output of running the \code{KPR} function.}
+
+\item{method}{A string specifying the inference method to use.}
+}
 \description{
-Inference for Kernel Penalized Regression models
+Implementation of various inference methods for high dimensional regression models. Currently only the GMD Inference is available.
 }

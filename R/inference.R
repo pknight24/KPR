@@ -1,5 +1,9 @@
 #' Inference for Kernel Penalized Regression models
 #'
+#' Implementation of various inference methods for high dimensional regression models. Currently only the GMD Inference is available.
+#'
+#' @param KPR.output The output of running the \code{KPR} function.
+#' @param method A string specifying the inference method to use.
 #' @importFrom natural olasso_cv
 #' @importFrom glmnet glmnet cv.glmnet
 #' @export
