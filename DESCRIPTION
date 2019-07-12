@@ -2,8 +2,8 @@ Package: KPR
 Type: Package
 Title: Kernel Penalized Regression
 Version: 0.1.1
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
+Author: Parker Knight
+Maintainer: Parker Knight <pknight24@ufl.edu>
 Description: Fits kernel penalized regression models
 License: GPL-2
 Encoding: UTF-8
