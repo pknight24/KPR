@@ -20,9 +20,11 @@
 #' \item{lambda.1se}{The largest value of lambda within one standard error of \code{lambda.min}.}
 #' \item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector.}
 #' @importFrom stats sd
+#' @importFrom Rcpp sourceCpp
+#' @useDynLib KPR, .registration = TRUE
 #' @export
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
-                n.lambda = 200, lambda, K = 5)
+                n.lambda = 200, lambda, K = 5, useCpp = TRUE)
 {
   cov.missing <- missing(covariates)
   Z <- designMatrix # penalized matrix
@@ -41,6 +43,7 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   Zrand <- Z[randidx, ]
   Erand <- as.matrix(E[randidx, ])
   Hrand <- H[randidx, randidx]
+  if (useCpp) computeErrorMatrix(Zrand, Erand, Yrand, Hrand, Q, lambda, K)
   for(j in 1:n.lambda){
     for(k in 1:K){
       Ytrain <- Yrand[-((n / K * (k - 1) + 1):(n / K * k))]

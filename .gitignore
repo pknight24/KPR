@@ -3,3 +3,6 @@ KPR.Rproj
 .Rproj.user
 *.Rhistory
 testing/*
+*.o
+*.so
+*.dll

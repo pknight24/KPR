@@ -9,6 +9,8 @@ License: GPL-2
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
+LinkingTo: Rcpp
 Imports:
   natural,
-  glmnet
+  glmnet,
+  Rcpp
