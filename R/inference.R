@@ -161,7 +161,9 @@ GMD <- function(X, H, Q, K)
 
   }
 
-  return(list(U = U, V = V, S = D, H = H, Q = Q))
+  tv <- sum(diag(X %*% Q %*% t(X) %*% H))
+
+  return(list(U = U, V = V, S = D, H = H, Q = Q, totalVariation = tv))
 
 }
 
