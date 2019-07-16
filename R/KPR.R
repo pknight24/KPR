@@ -37,42 +37,13 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
     lambda <- exp(seq(from = 0, to = 10, length.out = n.lambda))
   n.lambda <- length(lambda)
 
-  errors <- matrix(nrow = K, ncol = n.lambda)
   randidx <- sample(1:n, n)
   Yrand <- Y[randidx]
   Zrand <- Z[randidx, ]
   Erand <- as.matrix(E[randidx, ])
   Hrand <- H[randidx, randidx]
-  if (useCpp) print(str(computeErrorMatrix(Zrand, Erand, Yrand, Hrand, Q, lambda, K)))
-  for(j in 1:n.lambda){
-    for(k in 1:K){
-      Ytrain <- Yrand[-((n / K * (k - 1) + 1):(n / K * k))]
-      Ytest <- Yrand[((n / K * (k - 1) + 1):(n / K * k))]
-      Ztrain <- Zrand[-((n / K * (k - 1) + 1):(n / K * k)), ]
-      Ztest <- Zrand[((n / K * (k - 1) + 1):(n / K * k)), ]
-      Etrain <- Erand[-((n / K * (k - 1) + 1):(n / K * k)), ]
-      Etest <- Erand[((n / K * (k - 1) + 1):(n / K * k)), ]
-      Htrain <- Hrand[-((n / K * (k - 1) + 1):(n / K * k)), -((n / K * (k - 1) + 1):(n / K * k))]
-      Htest <- Hrand[  ((n / K * (k - 1) + 1):(n / K * k)),  ((n / K * (k - 1) + 1):(n / K * k))]
-
-      n.train <- nrow(Ztrain)
-
-      if (cov.missing) P <- diag(n.train)
-      else P <- diag(n.train) - (Etrain %*% solve( t(Etrain) %*% Htrain %*% Etrain ) %*% t(Etrain) %*% Htrain)
-      Y.p <- P %*% Ytrain
-      Z.p <- P %*% Ztrain
-
-      beta.hat <- Q %*% solve( t(Z.p) %*% Htrain %*% Z.p %*% Q + lambda[j] * diag(p) ) %*% t(Z.p) %*% Htrain %*% Y.p # penalized coefficients
-      if (cov.missing) eta.hat <- 0
-      else eta.hat <- solve(t(Etrain) %*% Htrain %*% Etrain) %*% t(Etrain) %*% Htrain %*% (Ytrain - Ztrain %*% beta.hat) # unpenalized coefficients
-
-      coefficients <- c(beta.hat, eta.hat)
-      Xtest <- cbind(Ztest, Etest)
-
-      yhat <- Xtest %*% coefficients
-      errors[k, j] <- t(Ytest - yhat) %*% Htest %*%  (Ytest - yhat)
-    }
-  }
+  if (useCpp) errors <- computeErrorMatrixCpp(Zrand, Erand, Yrand, Hrand, Q, lambda, K, cov.missing)
+  else errors <- computeErrorMatrixR(Zrand, Erand, Yrand, Hrand, Q, lambda, K, cov.missing)
   lambda.min.index <- which.min(colSums(errors))
   lambda.min <- lambda[lambda.min.index]
 
@@ -114,9 +85,52 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
               lambda.min = lambda.min,
               lambda.min.index = lambda.min.index,
               lambda.1se = lambda.1se,
-              lambda.1se.index = lambda.1se.index)
+              lambda.1se.index = lambda.1se.index,
+              cv.errors = errors)
   class(output) <- "KPR"
 
   return(output)
+
+}
+
+
+
+
+computeErrorMatrixR <- function(Zrand,Erand,Yrand,Hrand,Q,lambda,K,cov.missing)
+{
+  n.lambda <- length(lambda)
+  errors <- matrix(nrow = K, ncol = n.lambda)
+
+  for(j in 1:n.lambda){
+    for(k in 1:K){
+      Ytrain <- Yrand[-((n / K * (k - 1) + 1):(n / K * k))]
+      Ytest <- Yrand[((n / K * (k - 1) + 1):(n / K * k))]
+      Ztrain <- Zrand[-((n / K * (k - 1) + 1):(n / K * k)), ]
+      Ztest <- Zrand[((n / K * (k - 1) + 1):(n / K * k)), ]
+      Etrain <- Erand[-((n / K * (k - 1) + 1):(n / K * k)), ]
+      Etest <- Erand[((n / K * (k - 1) + 1):(n / K * k)), ]
+      Htrain <- Hrand[-((n / K * (k - 1) + 1):(n / K * k)), -((n / K * (k - 1) + 1):(n / K * k))]
+      Htest <- Hrand[  ((n / K * (k - 1) + 1):(n / K * k)),  ((n / K * (k - 1) + 1):(n / K * k))]
+
+      n.train <- nrow(Ztrain)
+
+      if (cov.missing) P <- diag(n.train)
+      else P <- diag(n.train) - (Etrain %*% solve( t(Etrain) %*% Htrain %*% Etrain ) %*% t(Etrain) %*% Htrain)
+      Y.p <- P %*% Ytrain
+      Z.p <- P %*% Ztrain
+
+      beta.hat <- Q %*% solve( t(Z.p) %*% Htrain %*% Z.p %*% Q + lambda[j] * diag(p) ) %*% t(Z.p) %*% Htrain %*% Y.p # penalized coefficients
+      if (cov.missing) eta.hat <- 0
+      else eta.hat <- solve(t(Etrain) %*% Htrain %*% Etrain) %*% t(Etrain) %*% Htrain %*% (Ytrain - Ztrain %*% beta.hat) # unpenalized coefficients
+
+      coefficients <- c(beta.hat, eta.hat)
+      Xtest <- cbind(Ztest, Etest)
+
+      yhat <- Xtest %*% coefficients
+      errors[k, j] <- t(Ytest - yhat) %*% Htest %*%  (Ytest - yhat)
+    }
+  }
+
+  return(errors)
 
 }
