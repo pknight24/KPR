@@ -24,7 +24,7 @@
 #' @useDynLib KPR, .registration = TRUE
 #' @export
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
-                n.lambda = 200, lambda, K = 5, useCpp = TRUE)
+                n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed)
 {
   cov.missing <- missing(covariates)
   Z <- designMatrix # penalized matrix
@@ -37,6 +37,7 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
     lambda <- exp(seq(from = 0, to = 10, length.out = n.lambda))
   n.lambda <- length(lambda)
 
+  if (!missing(seed)) set.seed(seed)
   randidx <- sample(1:n, n)
   Yrand <- Y[randidx]
   Zrand <- Z[randidx, ]
@@ -103,14 +104,16 @@ computeErrorMatrixR <- function(Zrand,Erand,Yrand,Hrand,Q,lambda,K,cov.missing)
 
   for(j in 1:n.lambda){
     for(k in 1:K){
-      Ytrain <- Yrand[-((n / K * (k - 1) + 1):(n / K * k))]
-      Ytest <- Yrand[((n / K * (k - 1) + 1):(n / K * k))]
-      Ztrain <- Zrand[-((n / K * (k - 1) + 1):(n / K * k)), ]
-      Ztest <- Zrand[((n / K * (k - 1) + 1):(n / K * k)), ]
-      Etrain <- Erand[-((n / K * (k - 1) + 1):(n / K * k)), ]
-      Etest <- Erand[((n / K * (k - 1) + 1):(n / K * k)), ]
-      Htrain <- Hrand[-((n / K * (k - 1) + 1):(n / K * k)), -((n / K * (k - 1) + 1):(n / K * k))]
-      Htest <- Hrand[  ((n / K * (k - 1) + 1):(n / K * k)),  ((n / K * (k - 1) + 1):(n / K * k))]
+      testIdx <- ((n / K * (k - 1) + 1):(n / K * k))
+      trainIdx <- sort(setdiff(1:n, testIdx), decreasing=TRUE)
+      Ytrain <- Yrand[trainIdx]
+      Ytest <- Yrand[testIdx]
+      Ztrain <- Zrand[trainIdx, ]
+      Ztest <- Zrand[testIdx, ]
+      Etrain <- Erand[trainIdx, ]
+      Etest <- Erand[testIdx, ]
+      Htrain <- Hrand[trainIdx, trainIdx]
+      Htest <- Hrand[  testIdx,  testIdx]
 
       n.train <- nrow(Ztrain)
 

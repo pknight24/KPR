@@ -29,7 +29,6 @@ NumericMatrix computeErrorMatrixCpp(NumericMatrix Zrand,
     {
       for (int k = 0; k < K; k++)
       {
-        // the test index isn't perfect; may want to look at this
         IntegerVector testIdx = Range(n / K * k, n / K * (k + 1) - 1);
         IntegerVector trainIdx = setdiff(allIdx, testIdx);
         arma::uvec testIdx_arma = as<arma::uvec>(testIdx);
