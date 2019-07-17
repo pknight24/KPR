@@ -10,6 +10,8 @@
 #' @param n.lambda The number of lambda values to test through the cross validation search. The values are generated internally.
 #' @param lambda A vector of lambda values to test through cross validation. This will override the sequence generated with the \code{n.lambda} parameter.
 #' @param K The number of folds in the cross validation search.
+#' @param useCpp Indicate whether to use the C++ backend for cross-validation.
+#' @param seed Set a seed for random number generation.
 #' @return
 #' \item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
 #' \item{eta.hat}{A matrix of estimated coefficients for the unpenalized variables, where each column corresponds to a different value of lambda.}
@@ -19,6 +21,7 @@
 #' to \code{lambda.min} from the \code{betahat} matrix.}
 #' \item{lambda.1se}{The largest value of lambda within one standard error of \code{lambda.min}.}
 #' \item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector.}
+#' \item{cv.errors}{The error matrix generated in the cross-validation procedure.}
 #' @importFrom stats sd
 #' @importFrom Rcpp sourceCpp
 #' @useDynLib KPR, .registration = TRUE
@@ -127,6 +130,11 @@ computeErrorMatrixR <- function(Zrand,Erand,Yrand,Hrand,Q,lambda,K,cov.missing)
       else eta.hat <- solve(t(Etrain) %*% Htrain %*% Etrain) %*% t(Etrain) %*% Htrain %*% (Ytrain - Ztrain %*% beta.hat) # unpenalized coefficients
 
       coefficients <- c(beta.hat, eta.hat)
+      if(length(testIdx) == 1)
+      {
+        Ztest <- t(matrix(Ztest))
+        Etest <- t(matrix(Etest))
+      }
       Xtest <- cbind(Ztest, Etest)
 
       yhat <- Xtest %*% coefficients
