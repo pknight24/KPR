@@ -7,6 +7,7 @@
 #' @param Y An n x 1 response vector. Should be scaled and centered.
 #' @param H An n x n sample similarity kernel. Must be symmetric and positive semidefinite. This defaults to an identity matrix.
 #' @param Q A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.
+#' @param REML logical, indicates whether to use REML to find the optimal value of \code{lambda}. If a value of \code{lambda} is given, this is ignored.
 #' @param n.lambda The number of lambda values to test through the cross validation search. The values are generated internally.
 #' @param lambda A vector of lambda values to test through cross validation. This will override the sequence generated with the \code{n.lambda} parameter.
 #' @param K The number of folds in the cross validation search.
@@ -29,7 +30,7 @@
 #' @useDynLib KPR, .registration = TRUE
 #' @export
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
-                REML = FALSE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed)
+                REML = TRUE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed)
 {
   cov.missing <- missing(covariates)
   Z <- designMatrix # penalized matrix
@@ -50,26 +51,39 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   }
   else
   {
+    REML <- FALSE
     if(missing(lambda))
       lambda <- exp(seq(from = 0, to = 10, length.out = n.lambda))
     n.lambda <- length(lambda)
 
-    if (!missing(seed)) set.seed(seed)
-    randidx <- sample(1:n, n)
-    Yrand <- Y[randidx]
-    Zrand <- Z[randidx, ]
-    Erand <- as.matrix(E[randidx, ])
-    Hrand <- H[randidx, randidx]
-    if (useCpp) errors <- computeErrorMatrixCpp(Zrand, Erand, Yrand, Hrand, Q, lambda, K, cov.missing)
-    else errors <- computeErrorMatrixR(Zrand, Erand, Yrand, Hrand, Q, lambda, K, cov.missing)
-    lambda.min.index <- which.min(colSums(errors))
-    lambda.min <- lambda[lambda.min.index]
+    if (n.lambda == 1)
+    {
+      lambda.min <- NULL
+      lambda.min.index <- NULL
+      lambda.1se <- NULL
+      lambda.1se.index <- NULL
+      errors <- NULL
+    }
+    else
+    {
+      if (!missing(seed)) set.seed(seed)
+      randidx <- sample(1:n, n)
+      Yrand <- Y[randidx]
+      Zrand <- Z[randidx, ]
+      Erand <- as.matrix(E[randidx, ])
+      Hrand <- H[randidx, randidx]
+      if (useCpp) errors <- computeErrorMatrixCpp(Zrand, Erand, Yrand, Hrand, Q, lambda, K, cov.missing)
+      else errors <- computeErrorMatrixR(Zrand, Erand, Yrand, Hrand, Q, lambda, K, cov.missing)
+      lambda.min.index <- which.min(colSums(errors))
+      lambda.min <- lambda[lambda.min.index]
 
-    se.QH.KPR <- sd(errors[, lambda.min.index]) * sqrt(K)
-    lambda.1se.indices <- which(colSums(errors) < sum(errors[,lambda.min.index]) + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
+      se.QH.KPR <- sd(errors[, lambda.min.index]) * sqrt(K)
+      lambda.1se.indices <- which(colSums(errors) < sum(errors[,lambda.min.index]) + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
 
-    lambda.1se <- max(lambda[lambda.1se.indices])
-    lambda.1se.index <- which(lambda == lambda.1se)
+      lambda.1se <- max(lambda[lambda.1se.indices])
+      lambda.1se.index <- which(lambda == lambda.1se)
+    }
+
   }
 
   estimates <- sapply(lambda, FUN = function(s) {
@@ -118,6 +132,10 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
 
 computeErrorMatrixR <- function(Zrand,Erand,Yrand,Hrand,Q,lambda,K,cov.missing)
 {
+
+  n <- nrow(Zrand)
+  p <- ncol(Zrand)
+
   n.lambda <- length(lambda)
   errors <- matrix(nrow = K, ncol = n.lambda)
 
@@ -164,6 +182,10 @@ computeErrorMatrixR <- function(Zrand,Erand,Yrand,Hrand,Q,lambda,K,cov.missing)
 
 remlEstimation <- function(Z, E, Y, H, Q, cov.missing)
 {
+
+  n <- nrow(Z)
+  p <- ncol(Z)
+
   if (cov.missing) P <- diag(n)
   else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
   Y.p <- P %*% Y

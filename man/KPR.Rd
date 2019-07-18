@@ -5,7 +5,7 @@
 \title{Kernel Penalized Regression}
 \usage{
 KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
-  Q = diag(ncol(designMatrix)), REML = FALSE, n.lambda = 200, lambda,
+  Q = diag(ncol(designMatrix)), REML = TRUE, n.lambda = 200, lambda,
   K = 5, useCpp = TRUE, seed)
 }
 \arguments{
@@ -18,6 +18,8 @@ KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
 \item{H}{An n x n sample similarity kernel. Must be symmetric and positive semidefinite. This defaults to an identity matrix.}
 
 \item{Q}{A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.}
+
+\item{REML}{logical, indicates whether to use REML to find the optimal value of \code{lambda}. If a value of \code{lambda} is given, this is ignored.}
 
 \item{n.lambda}{The number of lambda values to test through the cross validation search. The values are generated internally.}
 

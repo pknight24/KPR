@@ -4,6 +4,7 @@
 #'
 #' @param KPR.output The output of running the \code{KPR} function.
 #' @param method A string specifying the inference method to use.
+#' @param ... Additional parameters corresponding to specific inference methods.
 #' @importFrom natural olasso_cv
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats pnorm
@@ -13,19 +14,17 @@ inference <- function(KPR.output, method = "GMD", ...)
   if (method == "GMD") GMD.inference(KPR.output, ...)
 }
 
-GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numComponents = 10, use.default.lambda = TRUE)
+GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numComponents = 10)
 {
   Z <- KPR.output$Z
   E <- KPR.output$E # for now, we will ignore the E matrix
   Y <- KPR.output$Y
   H <- KPR.output$H
   Q <- KPR.output$Q
-  if (use.default.lambda) lambda <- c(KPR.output$lambda.min, KPR.output$lambda.1se)
-  else lambda <- KPR.output$lambda
+  lambda <- KPR.output$lambda
   n <- dim(Z)[1]
   p <- dim(Z)[2]
-  if (use.default.lambda) beta.hat.uncorrected <- KPR.output$beta.hat[,c(KPR.output$lamba.min.index, KPR.output$lambda.1se.index)]
-  else beta.hat.uncorrected <- KPR.output$beta.hat # before correction
+  beta.hat.uncorrected <- KPR.output$beta.hat # before correction
 
 
   gmd.out <- GMD(X = Z, H = H, Q = Q, K = numComponents)
@@ -104,7 +103,6 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
   })
 
   rownames(p.mat) <- colnames(Z)
-  if (use.default.lambda) colnames(p.mat) <- c("lambda.min", "lambda.1se")
 
   return(p.mat)
 }
