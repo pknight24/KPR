@@ -22,12 +22,14 @@
 #' \item{lambda.1se}{The largest value of lambda within one standard error of \code{lambda.min}.}
 #' \item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector.}
 #' \item{cv.errors}{The error matrix generated in the cross-validation procedure.}
+#' \item{REML}{Was REML used to find \code{lambda}?}
 #' @importFrom stats sd
 #' @importFrom Rcpp sourceCpp
+#' @importFrom nlme lme pdIdent VarCorr
 #' @useDynLib KPR, .registration = TRUE
 #' @export
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
-                n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed)
+                REML = FALSE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed)
 {
   cov.missing <- missing(covariates)
   Z <- designMatrix # penalized matrix
@@ -36,26 +38,39 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   if (cov.missing) E <- matrix(0, n) # arbitrarily set E to a zero vector if no covariates are given
   else E <- as.matrix(covariates)
 
-  if(missing(lambda))
-    lambda <- exp(seq(from = 0, to = 10, length.out = n.lambda))
-  n.lambda <- length(lambda)
+  if (REML & missing(lambda)) # we don't need to use REML if lambda is given.
+  {
+    lambda <- remlEstimation(Z, E, Y, H, Q, cov.missing)
+    lambda.min <- NULL
+    lambda.min.index <- NULL
+    lambda.1se <- NULL
+    lambda.1se.index <- NULL
+    errors <- NULL
 
-  if (!missing(seed)) set.seed(seed)
-  randidx <- sample(1:n, n)
-  Yrand <- Y[randidx]
-  Zrand <- Z[randidx, ]
-  Erand <- as.matrix(E[randidx, ])
-  Hrand <- H[randidx, randidx]
-  if (useCpp) errors <- computeErrorMatrixCpp(Zrand, Erand, Yrand, Hrand, Q, lambda, K, cov.missing)
-  else errors <- computeErrorMatrixR(Zrand, Erand, Yrand, Hrand, Q, lambda, K, cov.missing)
-  lambda.min.index <- which.min(colSums(errors))
-  lambda.min <- lambda[lambda.min.index]
+  }
+  else
+  {
+    if(missing(lambda))
+      lambda <- exp(seq(from = 0, to = 10, length.out = n.lambda))
+    n.lambda <- length(lambda)
 
-  se.QH.KPR <- sd(errors[, lambda.min.index]) * sqrt(K)
-  lambda.1se.indices <- which(colSums(errors) < sum(errors[,lambda.min.index]) + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
+    if (!missing(seed)) set.seed(seed)
+    randidx <- sample(1:n, n)
+    Yrand <- Y[randidx]
+    Zrand <- Z[randidx, ]
+    Erand <- as.matrix(E[randidx, ])
+    Hrand <- H[randidx, randidx]
+    if (useCpp) errors <- computeErrorMatrixCpp(Zrand, Erand, Yrand, Hrand, Q, lambda, K, cov.missing)
+    else errors <- computeErrorMatrixR(Zrand, Erand, Yrand, Hrand, Q, lambda, K, cov.missing)
+    lambda.min.index <- which.min(colSums(errors))
+    lambda.min <- lambda[lambda.min.index]
 
-  lambda.1se <- max(lambda[lambda.1se.indices])
-  lambda.1se.index <- which(lambda == lambda.1se)
+    se.QH.KPR <- sd(errors[, lambda.min.index]) * sqrt(K)
+    lambda.1se.indices <- which(colSums(errors) < sum(errors[,lambda.min.index]) + se.QH.KPR) # this gets all of the indices of the lambda values withing one standard error of the min
+
+    lambda.1se <- max(lambda[lambda.1se.indices])
+    lambda.1se.index <- which(lambda == lambda.1se)
+  }
 
   estimates <- sapply(lambda, FUN = function(s) {
       if (cov.missing) P <- diag(n)
@@ -90,7 +105,8 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
               lambda.min.index = lambda.min.index,
               lambda.1se = lambda.1se,
               lambda.1se.index = lambda.1se.index,
-              cv.errors = errors)
+              cv.errors = errors,
+              REML = REML)
   class(output) <- "KPR"
 
   return(output)
@@ -143,5 +159,26 @@ computeErrorMatrixR <- function(Zrand,Erand,Yrand,Hrand,Q,lambda,K,cov.missing)
   }
 
   return(errors)
+
+}
+
+remlEstimation <- function(Z, E, Y, H, Q, cov.missing)
+{
+  if (cov.missing) P <- diag(n)
+  else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
+  Y.p <- P %*% Y
+  Z.p <- P %*% Z # apply P to the variables that should be penalized
+
+  L.Q <- chol(Q)
+  L.H <- chol(H)
+
+  Z.tilde <- L.H %*% Z.p %*% L.Q
+  Y.tilde <- L.H %*% Y.p
+
+  dummyID <- factor(rep(1, nrow(Z)))
+  lmm.fit <- suppressWarnings(lme(Y.tilde~1, random=list(dummyID = pdIdent(~-1 + Z.tilde))))
+  lambda.reml <- lmm.fit$sigma^2 / as.numeric(VarCorr(lmm.fit)[1,1])^2
+
+  return(lambda.reml)
 
 }

@@ -5,8 +5,8 @@
 \title{Kernel Penalized Regression}
 \usage{
 KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
-  Q = diag(ncol(designMatrix)), n.lambda = 200, lambda, K = 5,
-  useCpp = TRUE, seed)
+  Q = diag(ncol(designMatrix)), REML = FALSE, n.lambda = 200, lambda,
+  K = 5, useCpp = TRUE, seed)
 }
 \arguments{
 \item{designMatrix}{An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.}
@@ -39,6 +39,7 @@ to \code{lambda.min} from the \code{betahat} matrix.}
 \item{lambda.1se}{The largest value of lambda within one standard error of \code{lambda.min}.}
 \item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector.}
 \item{cv.errors}{The error matrix generated in the cross-validation procedure.}
+\item{REML}{Was REML used to find \code{lambda}?}
 }
 \description{
 Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.

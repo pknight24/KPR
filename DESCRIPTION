@@ -13,4 +13,5 @@ LinkingTo: Rcpp, RcppArmadillo
 Imports:
   natural,
   glmnet,
-  Rcpp
+  Rcpp,
+  nlme
