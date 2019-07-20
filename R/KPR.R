@@ -32,8 +32,17 @@
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
                 REML = TRUE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed)
 {
+  # eigen.Q <- eigen(Q)
+  # Q <- (1/eigen.Q$values[1]) * Q # standardize Q
+  # P.Q <- eigen.Q$vectors %*% t(eigen.Q$vectors)
+  #
+  # XU <- designMatrix %*% eigen.Q$vectors
+  # XU.std <- apply(X, 2, function(x) x / norm(x, type="2"))
+
+
+
   cov.missing <- missing(covariates)
-  Z <- designMatrix # penalized matrix
+  Z <-  designMatrix # XU.std %*% t(eigen.Q$vectors)# penalized matrix
   n <- nrow(Z)
   p <- ncol(Z) # number of penalized variables
   if (cov.missing) E <- matrix(0, n) # arbitrarily set E to a zero vector if no covariates are given
@@ -191,11 +200,13 @@ remlEstimation <- function(Z, E, Y, H, Q, cov.missing)
   Y.p <- P %*% Y
   Z.p <- P %*% Z # apply P to the variables that should be penalized
 
-  L.Q <- chol(Q)
-  L.H <- chol(H)
+  eigen.Q <- eigen(Q)
+  L.Q <- eigen.Q$vectors %*% diag(sqrt(eigen.Q$values))
+  eigen.H <- eigen(H)
+  L.H <- eigen.H$vectors %*% diag(sqrt(eigen.H$values))
 
-  Z.tilde <- L.H %*% Z.p %*% L.Q
-  Y.tilde <- L.H %*% Y.p
+  Z.tilde <- t(L.H) %*% Z.p %*% L.Q
+  Y.tilde <- t(L.H) %*% Y.p
 
   dummyID <- factor(rep(1, nrow(Z)))
   lmm.fit <- suppressWarnings(lme(Y.tilde~1, random=list(dummyID = pdIdent(~-1 + Z.tilde))))

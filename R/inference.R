@@ -48,8 +48,8 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
   vectors.Q = eigen.Q$vectors
   L.Q = vectors.Q%*%diag(sqrt(values.Q))
 
-  Z.tilde = L.H%*%Z%*%vectors.Q
-  Y.tilde = L.H%*%Y
+  Z.tilde = t(L.H)%*%Z%*%vectors.Q
+  Y.tilde = t(L.H)%*%Y
 
   # using natural lasso method
 
