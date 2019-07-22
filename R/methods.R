@@ -102,7 +102,6 @@ biplot.KPR <- function(x, ...)
   infer.out <- inference(x)
   if (length(x$lambda) > 1) p.values <- infer.out[,x$lambda.min.index]
   else p.values <- infer.out
-  print(p.values)
   index = which(p.values < 0.05)
 
   #calculate coordinates
@@ -130,8 +129,8 @@ biplot.KPR <- function(x, ...)
   for(i in index){
 
 
-      # arrows(x0 = 0,y0 = 0,x1 = arrow.x[i]/xratio, y1 = arrow.y[i]/yratio, length = 0.05, col = arrow.col)
-      # text(arrow.x[i]/xratio, arrow.y[i]/yratio*1.1, names[iter], cex = 1, col = legend.col)
+      arrows(x0 = 0,y0 = 0,x1 = arrow.x[i]/xratio, y1 = arrow.y[i]/yratio, length = 0.05, col = arrow.col)
+      text(arrow.x[i]/xratio, arrow.y[i]/yratio*1.1, names[iter], cex = 1, col = legend.col)
 
     iter = iter + 1
   }
