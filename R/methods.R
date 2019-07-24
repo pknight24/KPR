@@ -102,12 +102,20 @@ biplot.KPR <- function(x, ...)
   infer.out <- inference(x, ...)
   if (length(x$lambda) > 1) p.values <- infer.out[,x$lambda.min.index]
   else p.values <- infer.out
-  index = which(p.values < 0.05)
+  signif <- which(p.values < 0.05) # we keep track of the significant coefficients
 
   #calculate coordinates
   V.plot = Q%*%V
   arrow.x = V.plot[,1]
   arrow.y = V.plot[,2]
+
+  arrow.mat <- cbind(arrow.x, arrow.y)
+
+  norms <- apply(arrow.mat, 1, function(xx) norm(xx, type="2"))
+
+  big.norms <- which(norms > quantile(norms, 0.25)) # we only want the arrows with an L2 norm past the .25 quantile
+
+  index  <- intersect(signif, big.norms)
 
   if (is.null(colnames(x$Z))) names = paste0("V", index)
   else names <- colnames(x$Z)
