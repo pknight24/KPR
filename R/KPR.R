@@ -106,8 +106,8 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
       else eta.hat <- solve(t(E) %*% H %*% E) %*% t(E) %*% H %*% (Y - Z %*% beta.hat)
       c(beta.hat, eta.hat)
   })
-  beta.hat <- estimates[1:p,]
-  eta.hat <- estimates[-(1:p),]
+  beta.hat <- as.matrix(estimates[1:p,])
+  eta.hat <- as.matrix(estimates[-(1:p),])
 
   rownames(beta.hat) <- colnames(Z)
   rownames(eta.hat) <- colnames(E)

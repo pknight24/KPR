@@ -62,7 +62,7 @@ biplot.KPR <- function(x, ...)
   Z <- x$Z
   H <- x$H
   Q <- x$Q
-  if (!exists("K")) K <- 10
+  K <- 10
   gmd.out <- GMD(X = Z, H = H, Q = Q, K = K)
   U <- gmd.out$U
   S <- gmd.out$S
@@ -99,7 +99,7 @@ biplot.KPR <- function(x, ...)
   xaxp = axTicks(1)
   yaxp = axTicks(2)
 
-  infer.out <- inference(x)
+  infer.out <- inference(x, ...)
   if (length(x$lambda) > 1) p.values <- infer.out[,x$lambda.min.index]
   else p.values <- infer.out
   index = which(p.values < 0.05)

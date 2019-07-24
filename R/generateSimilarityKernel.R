@@ -14,11 +14,11 @@ generateSimilarityKernel <- function(D)
   M <- -J %*% D %*% J / 2
 
   eigen.M <- eigen(M)
-  if (all(eigen.M$values >= 0 )) return(M)
+  if (all(eigen.M$values >= 10^-10 )) return(M)
   else
   {
-    cat("\nSetting negative eigenvalues to 0\n")
-    eigen.M$values[eigen.M$values < 0 ] <- 10^-10
+    cat("\nSetting small and negative eigenvalues to 10^-10\n")
+    eigen.M$values[eigen.M$values < 10^-10 ] <- 10^-10
     M <- eigen.M$vectors %*% diag(eigen.M$values) %*% t(eigen.M$vectors)
     return(M)
   }
