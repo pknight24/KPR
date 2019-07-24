@@ -56,6 +56,8 @@ summary.KPR <- function(object, ...)
 }
 
 #' @importFrom viridis viridis
+#' @importFrom graphics arrows axTicks axis plot points text
+#' @importFrom stats quantile
 #' @export
 biplot.KPR <- function(x, ...)
 {

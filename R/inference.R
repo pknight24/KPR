@@ -8,10 +8,13 @@
 #' @importFrom natural olasso_cv
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats pnorm
+#' @importFrom hdi ridge.proj
 #' @export
 inference <- function(KPR.output, method = "GMD", ...)
 {
   if (method == "GMD") GMD.inference(KPR.output, ...)
+  else if (method == "hdi") hdi.ridge.inference(KPR.output, ...)
+  else warning("Inference method not recognized")
 }
 
 GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numComponents = 10)
@@ -21,10 +24,14 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
   Y <- KPR.output$Y
   H <- KPR.output$H
   Q <- KPR.output$Q
-  lambda <- KPR.output$lambda
+  if (length(KPR.output$lambda) == 1) lambda <- KPR.output$lambda
+  else lambda  <- c(KPR.output$lambda.min, KPR.output$lambda.1se)
   n <- dim(Z)[1]
   p <- dim(Z)[2]
-  beta.hat.uncorrected <- KPR.output$beta.hat # before correction
+  if (length(KPR.output$lambda) == 1) beta.hat.uncorrected <- KPR.output$beta.hat # before correction
+  else beta.hat.uncorrected <- KPR.output$beta.hat[,
+                                                   c(KPR.output$lambda.min.index,
+                                                     KPR.output$lambda.1se.index)]
 
 
   gmd.out <- GMD(X = Z, H = H, Q = Q, K = numComponents)
@@ -103,6 +110,7 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
   })
 
   rownames(p.mat) <- colnames(Z)
+  if (length(lambda) == 2) colnames(p.mat) <- c("lambda.min", "lambda.1se")
 
   return(p.mat)
 }
@@ -171,5 +179,40 @@ get_uv = function(X, H, Q, u_0, v_0){
   v = t(X)%*%H%*%u/as.numeric(sqrt(t(u)%*%t(H)%*%X%*%Q%*%t(X)%*%H%*%u))
 
   return(list(u = u, v = v))
+
+}
+
+
+hdi.ridge.inference <- function(KPR.output, ...)
+{
+    Z <- KPR.output$Z
+    Y <- KPR.output$Y
+    E <- KPR.output$E
+    H <- KPR.output$H
+    Q <- KPR.output$Q
+
+    n <- nrow(Z)
+    p <- ncol(Z)
+
+    if (is.null(E)) P <- diag(n)
+    else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
+    Y.p <- P %*% Y
+    Z.p <- P %*% Z
+
+    eigen.Q <- eigen(Q)
+    L.Q <- eigen.Q$vectors %*% diag(sqrt(eigen.Q$values))
+    eigen.H <- eigen(H)
+    L.H <- eigen.H$vectors %*% diag(sqrt(eigen.H$values))
+
+    Z.tilde <- t(L.H) %*% Z.p %*% L.Q
+    Y.tilde <- t(L.H) %*% Y.p
+
+    if (length(KPR.output$lambda) == 1) lambda <- KPR.output$lambda
+    else lambda <- c(KPR.output$lambda.min, KPR.output$lambda.1se)
+
+    pval <- sapply(lambda, function(s) ridge.proj(x = Z.tilde, y = Y.tilde, lambda = s, standardize = FALSE, ...)$pval)
+    rownames(pval) <- colnames(Z)
+    if (length(lambda) > 1) colnames(pval) <- c("lambda.min", "lambd.1se")
+    pval
 
 }

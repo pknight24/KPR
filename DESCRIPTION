@@ -15,4 +15,5 @@ Imports:
   glmnet,
   Rcpp,
   nlme,
-  viridis
+  viridis,
+  hdi
