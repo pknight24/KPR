@@ -14,5 +14,5 @@ inference(KPR.output, method = "GMD", ...)
 \item{...}{Additional parameters corresponding to specific inference methods.}
 }
 \description{
-Implementation of various inference methods for high dimensional regression models. Currently only the GMD Inference is available.
+Implementation of various inference methods for high dimensional regression. Currently, the only methods available are the GMD inference (used by default) and the ridge projection method, from the \code{hdi} package. To select the ridge projection method, set \code{method = "hdi"}. Before calling \code{ridge.proj}, we transform the data with a Cholesky decomposition, which allows us to formulate the model as a ridge problem while still including information about H and Q. However, this means that when a non-trivial Q is included in the KPR model, \code{ridge.proj} will return p-values corresponding to the DPCoA estimates, not the true KPR estimates. This may slightly affect interpretability.
 }

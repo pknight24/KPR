@@ -1,6 +1,6 @@
 #' Inference for Kernel Penalized Regression models
 #'
-#' Implementation of various inference methods for high dimensional regression models. Currently only the GMD Inference is available.
+#' Implementation of various inference methods for high dimensional regression. Currently, the only methods available are the GMD inference (used by default) and the ridge projection method, from the \code{hdi} package. To select the ridge projection method, set \code{method = "hdi"}. Before calling \code{ridge.proj}, we transform the data with a Cholesky decomposition, which allows us to formulate the model as a ridge problem while still including information about H and Q. However, this means that when a non-trivial Q is included in the KPR model, \code{ridge.proj} will return p-values corresponding to the DPCoA estimates, not the true KPR estimates. This may slightly affect interpretability.
 #'
 #' @param KPR.output The output of running the \code{KPR} function.
 #' @param method A string specifying the inference method to use.
@@ -12,9 +12,11 @@
 #' @export
 inference <- function(KPR.output, method = "GMD", ...)
 {
+  if (class(KPR.output) != "KPR") stop("Input is not of class 'KPR'")
+
   if (method == "GMD") GMD.inference(KPR.output, ...)
   else if (method == "hdi") hdi.ridge.inference(KPR.output, ...)
-  else warning("Inference method not recognized")
+  else stop("Inference method not recognized")
 }
 
 GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numComponents = 10)
