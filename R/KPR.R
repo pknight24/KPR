@@ -112,8 +112,8 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   rownames(beta.hat) <- colnames(Z)
   rownames(eta.hat) <- colnames(E)
 
-  if (all(eta.hat == rep(0,length(lambda)))) eta.hat <- NULL
-  if (all(E == matrix(0, n))) E <- NULL
+  if (cov.missing) eta.hat <- NULL
+  if (cov.missing) E <- NULL
 
 
   output <- list(Z = Z,

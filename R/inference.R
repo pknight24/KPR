@@ -36,7 +36,12 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
                                                      KPR.output$lambda.1se.index)]
 
 
-  gmd.out <- GMD(X = Z, H = H, Q = Q, K = numComponents)
+  if (is.null(E)) P <- diag(n)
+  else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
+  Y.p <- P %*% Y
+  Z.p <- P %*% Z
+
+  gmd.out <- GMD(X = Z.p, H = H, Q = Q, K = numComponents)
 
   U <- gmd.out$U
   V <- gmd.out$V
@@ -57,8 +62,8 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, numCompon
   vectors.Q = eigen.Q$vectors
   L.Q = vectors.Q%*%diag(sqrt(values.Q))
 
-  Z.tilde = t(L.H)%*%Z%*%vectors.Q
-  Y.tilde = t(L.H)%*%Y
+  Z.tilde = t(L.H)%*%Z.p%*%vectors.Q
+  Y.tilde = t(L.H)%*%Y.p
 
   # using natural lasso method
 
