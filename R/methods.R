@@ -55,7 +55,7 @@ summary.KPR <- function(object, ...)
 
 }
 
-#' @importFrom viridis viridis
+#' @importFrom viridis plasma
 #' @importFrom graphics arrows axTicks axis plot points text
 #' @importFrom stats quantile
 #' @export
@@ -87,7 +87,7 @@ biplot.KPR <- function(x, ...)
 
   ycolor <- x$Y
   order <- findInterval(ycolor, sort(ycolor))
-  sample.col = viridis(length(order))[order]
+  sample.col = plasma(length(order))[order]
 
   arrow.col = 'gray50'
   legend.col = 'black'
@@ -136,6 +136,13 @@ biplot.KPR <- function(x, ...)
   ysci = as.numeric(unlist(strsplit(formatC(yratio, format = 'e'),"e")))
   ylab.arrow = round(yaxp*ysci[1]*10^(ysci[2]), digits = 2)
 
+  points(eta[,1], eta[,2], col = sample.col, pch = sample.pch)
+
+  legend("topleft", title="Outcome (Y)",
+         legend=c(round(min(x$Y), digits = 3), round(max(x$Y), digits = 3)),
+         col=c(sample.col[which.min(x$Y)], sample.col[which.max(x$Y)]),
+         inset=0.01, pch = sample.pch, cex = 0.75)
+
   for(i in index){
 
 
@@ -149,5 +156,5 @@ biplot.KPR <- function(x, ...)
   axis(3, at = xaxp, labels = as.character(xlab.arrow))
   axis(4, at = yaxp, labels = as.character(ylab.arrow))
 
-  points(eta[,1], eta[,2], col = sample.col, pch = sample.pch)
+
 }
