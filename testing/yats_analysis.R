@@ -126,27 +126,30 @@ X <- apply(X.clr, 2, function(x) x - mean(x)) # column center X.clr
 
 Y <- age - mean(age)
 
+permuted <- permute::shuffle(length(Y))
+
+Y.perm <- Y[permuted]
+
 # model fitting and inference
-kpr.out <- KPR(designMatrix = X, Y = Y)
+kpr.out <- KPR(designMatrix = X, Y = Y, Q=Q)
 
 infer.out <- inference(kpr.out, method = "GMD")[,1]
 
 hdi.out <- inference(kpr.out, method = "hdi")[,1]
 
-par(mfrow = c(3, 2))
-hist(hdi.out, main = "hdi pvalues")
+grace.out <- inference(kpr.out, method = "Grace")[,1]
+
+par(mfrow = c(2, 2))
+hist(grace.out, main = "Grace pvalues")
 hist(infer.out, main = "GMD pvalues")
 
-plot(hdi.out)
+plot(grace.out)
 plot(infer.out)
-
-biplot(kpr.out, method = "hdi")
-biplot(kpr.out)
 
 results <- data.frame(gmd.pvals = infer.out,
                       hdi.pvals = hdi.out,
+                      grace.pvals = grace.out,
                       estimates = kpr.out$beta.hat,
-                      genus = colnames(X)) %>%
-    arrange(gmd.pvals)
+                      genus = colnames(X))
 
 par(mfrow = c(1,1))

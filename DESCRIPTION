@@ -16,4 +16,5 @@ Imports:
   Rcpp,
   nlme,
   viridis,
-  hdi
+  hdi,
+  Grace

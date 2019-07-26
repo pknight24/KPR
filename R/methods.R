@@ -56,7 +56,7 @@ summary.KPR <- function(object, ...)
 }
 
 #' @importFrom viridis plasma
-#' @importFrom graphics arrows axTicks axis plot points text
+#' @importFrom graphics arrows axTicks axis plot points text legend
 #' @importFrom stats quantile
 #' @export
 biplot.KPR <- function(x, ...)

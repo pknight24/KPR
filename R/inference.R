@@ -1,6 +1,10 @@
 #' Inference for Kernel Penalized Regression models
 #'
-#' Implementation of various inference methods for high dimensional regression. Currently, the only methods available are the GMD inference (used by default) and the ridge projection method, from the \code{hdi} package. To select the ridge projection method, set \code{method = "hdi"}. Before calling \code{ridge.proj}, we transform the data with a Cholesky decomposition, which allows us to formulate the model as a ridge problem while still including information about H and Q. However, this means that when a non-trivial Q is included in the KPR model, \code{ridge.proj} will return p-values corresponding to the DPCoA estimates, not the true KPR estimates. This may slightly affect interpretability.
+#' Implementation of various inference methods for high dimensional regression. Currently, the available methods are the GMD inference (used by default), the Grace inference method, and the ridge projection method, from the \code{hdi} package. To select the Grace method, set \code{method = "Grace"} and to select the ridge projection method, set \code{method = "hdi"}.
+#'
+#' Before calling \code{ridge.proj}, we transform the data with a Cholesky decomposition, which allows us to formulate the model as a ridge problem while still including information about H and Q. However, this means that when a non-trivial Q is included in the KPR model, \code{ridge.proj} will return p-values corresponding to the DPCoA estimates, not the true KPR estimates. This may slightly affect interpretability.
+#'
+#' The value of lambda used in all inference methods is determined in the KPR model fit.
 #'
 #' @param KPR.output The output of running the \code{KPR} function.
 #' @param method A string specifying the inference method to use.
@@ -9,6 +13,7 @@
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats pnorm
 #' @importFrom hdi ridge.proj
+#' @importFrom Grace grace.test
 #' @export
 inference <- function(KPR.output, method = "GMD", ...)
 {
@@ -16,6 +21,7 @@ inference <- function(KPR.output, method = "GMD", ...)
 
   if (method == "GMD") GMD.inference(KPR.output, ...)
   else if (method == "hdi") hdi.ridge.inference(KPR.output, ...)
+  else if (method == "Grace") grace.inference(KPR.output, ...)
   else stop("Inference method not recognized")
 }
 
@@ -218,6 +224,38 @@ hdi.ridge.inference <- function(KPR.output, ...)
     else lambda <- c(KPR.output$lambda.min, KPR.output$lambda.1se)
 
     pval <- sapply(lambda, function(s) ridge.proj(x = Z.tilde, y = Y.tilde, lambda = s, standardize = FALSE, ...)$pval)
+    rownames(pval) <- colnames(Z)
+    if (length(lambda) > 1) colnames(pval) <- c("lambda.min", "lambd.1se")
+    pval
+
+}
+
+grace.inference <- function(KPR.output, ...)
+{
+    Z <- KPR.output$Z
+    Y <- KPR.output$Y
+    E <- KPR.output$E
+    H <- KPR.output$H
+    Q <- KPR.output$Q
+
+    n <- nrow(Z)
+    p <- ncol(Z)
+
+    if (is.null(E)) P <- diag(n)
+    else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
+    Y.p <- P %*% Y
+    Z.p <- P %*% Z
+
+    eigen.H <- eigen(H)
+    L.H <- eigen.H$vectors %*% diag(sqrt(eigen.H$values))
+
+    Z.tilde <- t(L.H) %*% Z.p
+    Y.tilde <- t(L.H) %*% Y.p
+
+    if (length(KPR.output$lambda) == 1) lambda <- KPR.output$lambda
+    else lambda <- c(KPR.output$lambda.min, KPR.output$lambda.1se)
+
+    pval <- sapply(lambda, function(s) grace.test(X = Z.tilde, Y = as.vector(Y.tilde), L = solve(Q), lambda.L = s, C = "cv", ...)$pvalue)
     rownames(pval) <- colnames(Z)
     if (length(lambda) > 1) colnames(pval) <- c("lambda.min", "lambd.1se")
     pval
