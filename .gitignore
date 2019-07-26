@@ -2,7 +2,6 @@ KPR.Rproj
 .Rproj.user/*
 .Rproj.user
 *.Rhistory
-testing/*
 *.o
 *.so
 *.dll
