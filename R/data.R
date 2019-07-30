@@ -19,7 +19,7 @@
 #' @usage data(yatsunenko)
 #' @format A list with the following entries:
 #' \describe{
-#'   \item{\code{raw.data}}{The raw abundance counts for each sample, across 149 genera.}
+#'   \item{\code{raw.counts}}{The raw abundance counts for each sample, across 149 genera.}
 #'   \item{\code{age}}{The age (in years) of each subject.}
 #'   \item{\code{patristic}}{Patristic differences between each of the 149 genera.}
 #'   \item{\code{unifrac}}{Unweighted UniFrac distances bewteen each of the 100 samples.}

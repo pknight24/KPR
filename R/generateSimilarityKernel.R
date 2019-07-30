@@ -11,7 +11,7 @@ generateSimilarityKernel <- function(D)
 
   n <- dim(D)[1]
   J <- diag(n) - 1 / n
-  M <- -J %*% D %*% J / 2
+  M <- -J %*% (D^2) %*% J / 2
 
   eigen.M <- eigen(M)
   if (all(eigen.M$values >= 10^-10 )) return(M)

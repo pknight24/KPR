@@ -7,3 +7,5 @@ KPR.Rproj
 *.dll
 *~
 inst/doc
+doc
+Meta
