@@ -1,0 +1,61 @@
+---
+title: "KPR: Kernel Penalized Regression"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{KPR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+The `KPR` package provides estimation and inference methods for kernel
+penalized regression models, designed for doubly-structured high
+dimensional data. Kernel penalized regression is an extension of
+ridge regression that allows for the inclusion of external sample-wise and
+parameter-wise structure, expressed through similarity matrices
+(kernels). For example, a researcher analyzing human microbiome data
+may want to include UniFrac distances between samples (or similarly,
+patristic distances between microbes) in their
+penalized regression model. `KPR` is designed to handle cases of this
+sort, and includes functions for basic data processing in addition to
+estimation and inference. For further reading on the theory and
+application of kernel penalized regression models, see [KPR CITATION].
+
+##### Notation and Model Formulation
+
+Kernel penalized regression models take the form
+
+$$\mathbb{E}(\mathbf{Y}) = \mathbf{Z}\beta + \mathbf{E}\eta$$
+
+where $\mathbf{Y}$ is an $n \times 1$ vector of continous outcomes, $\mathbf{Z}$
+is an $n \times p$ data matrix with columns corresponding to
+*penalized* parameters, and $\mathbf{E}$ is an $n \times r$ matrix with
+unpenalized columns. $\beta$ is our $p \times 1$ vector of penalized
+parameters, and $\eta$ is an $r \times 1$ vector of unpenalized
+parameters.
+
+Estimating the parameters $\beta$ and $\eta$ yields the following optimization problem:
+
+$$\hat{\beta}, \hat{\eta} = \mathop{\mathrm{arg\,min}}_{\beta, \eta}
+  \left\{\Vert \mathbf{Y} - \mathbf{Z}\beta - \mathbf{E}\eta
+    \Vert^2_{H} + \lambda\Vert \beta \Vert^2_{Q^{-1}}\right\}$$
+
+$\mathbf{H}$ denotes the $n \times n$ sample kernel, and
+$\mathbf{Q}$ denotes the $p \times p$ parameter kernel. Note that $n$
+represents the number of samples, $p$ the number of penalized parameters, and $r$ the number of
+unpenalized parameters. 
+
+For any positive semidefinite $m \times m$ matrix $\mathbf{A}$, we define
+$\Vert x\Vert_{A}$ as $x^\top\mathbf{A}x$ for $x \in \mathbb{R}^m$. 
+It is assumed throughout that $\mathbf{H}$ and $\mathbf{Q}$ are both positive semidefinite.
+
+## Data processing
+
+## Estimation
+
+## Inference

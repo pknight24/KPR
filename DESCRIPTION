@@ -18,3 +18,7 @@ Imports:
   viridis,
   hdi,
   Grace
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

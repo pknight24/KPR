@@ -95,6 +95,13 @@ Q <- as.matrix(read.table("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yat
 
 geography.csv <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_for_KPr_paper/geography.csv")
 
+patristic.raw <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/Study_850_output/patristic149.txt", stringsAsFactors = FALSE)
+
+patristic <- as.matrix(patristic.raw[,-1])
+rownames(patristic) <- patristic.raw$X
+
+Q_ <- generateSimilarityKernel(patristic)
+
 geography <- sapply(rownames(Xraw), function(s) filter(geography.csv, id == s)$geo)
 
 E <- model.matrix(~ geography) %>% (function(mat) mat[,-1])
@@ -104,7 +111,7 @@ E <- model.matrix(~ geography) %>% (function(mat) mat[,-1])
 rm(temp.df, unifrac.csv, unifrac.df,
    age.csv, otu.df, otu, clean.names, otu.csv,
    ec.csv, ec.df, ec.clr, ec.filtered, ec.cols.to.ignore,
-   geography, geography.csv)
+   geography.csv)
 
 
 # final preparation of all the data
@@ -153,3 +160,11 @@ results <- data.frame(gmd.pvals = infer.out,
                       genus = colnames(X))
 
 par(mfrow = c(1,1))
+
+
+yatsunenko <- list(raw.counts = Xraw,
+                   age = age,
+                   patristic = patristic,
+                   unifrac = unifrac,
+                   ec = ec,
+                   geography = geography)
