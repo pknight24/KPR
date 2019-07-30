@@ -1,11 +1,11 @@
-#' Aitchisen's Variation Matrix
+#' Aitchison's Variation Matrix
 #'
-#' Computes Aitchisen's variation matrix from a matrix X
+#' Computes Aitchison's variation matrix from a matrix X
 #' @param X An n x p data matrix.
-#' @return A p x p Aitchisen variation matrix.
+#' @return A p x p Aitchison variation matrix.
 #' @importFrom stats var
 #' @export
-aitchisenVariation <- function(X)
+aitchisonVariation <- function(X)
 {
   p <- ncol(X)
   A <- matrix(nrow = p, ncol = p)
