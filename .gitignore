@@ -5,4 +5,5 @@ KPR.Rproj
 *.o
 *.so
 *.dll
+*~
 inst/doc
