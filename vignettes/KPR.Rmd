@@ -19,11 +19,11 @@ dimensional data. Kernel penalized regression is an extension of
 ridge regression that allows for the inclusion of external sample-wise and
 parameter-wise structure, expressed through similarity matrices
 (kernels). For example, a researcher analyzing human microbiome data
-may want to include UniFrac distances between samples (or similarly,
-patristic distances between microbes) in their
-penalized regression model. `KPR` is designed to handle cases of this
-sort, and includes functions for basic data processing in addition to
-estimation and inference. For further reading on the theory and
+may want a regression model that incorporates UniFrac distances between samples (and/or
+phylogenetic distances between microbes). `KPR` provides both
+estimation and inference for individual variables in a penalized
+regression model that accounts for this type of prior structure among
+samples and variables. For further reading on the theory and
 application of kernel penalized regression models, see [KPR CITATION].
 
 ##### Notation and Model Formulation
@@ -53,9 +53,9 @@ represents the number of samples, $p$ the number of penalized terms, and $r$ the
 unpenalized terms. The parameter $\lambda$ is a positive number that
 determines the strength of regularization.
 
-For any positive semidefinite $m \times m$ matrix $\mathbf{A}$, we define
-$\Vert x\Vert_{A}$ as $x^\top\mathbf{A}x$ for $x \in \mathbb{R}^m$. 
-It is assumed throughout that $\mathbf{H}$ and $\mathbf{Q}$ are both positive semidefinite.
+For any positive definite $m \times m$ matrix $\mathbf{A}$, we define
+$\Vert x\Vert_{A}^{2}$ as $x^\top\mathbf{A}x$ for $x \in \mathbb{R}^m$. 
+It is assumed throughout that $\mathbf{H}$ and $\mathbf{Q}$ are both positive definite.
 
 ## Data processing
 
@@ -86,14 +86,15 @@ The `generateSimilarityKernel` function computes Gower's centered
 similarity kernel $\mathbf{K}$ from any distance matrix $\mathbf{D}$,
 specifically
 
-$$\mathbf{K} = -\frac{1}{2}\mathbf{J}\mathbf{D^{2}}\mathbf{J}$$
+$$\mathbf{K} = -\frac{1}{2}\mathbf{J}\mathbf{D}^{(2)}\mathbf{J}$$
 
-where $\mathbf{J}$ is a centering matrix.
+where $\mathbf{J}$ is a centering matrix, and $\mathbf{D}^{(2)}$
+denotes a matrix of squared distances.
 
 Additionally, if the resulting similarity kernel has any negative or very small
 eigenvalues, `generateSimilarityKernel` will set these eigenvalues to
-the smallest positive (or "large enough") eigenvalue divided by 2. This essentially forces the kernel to "behave" as a positive
-semidefinite matrix.
+the smallest positive (or "large enough") eigenvalue divided
+by 2. This essentially forces the kernel to "behave" as a positive definite matrix.
 
 ```{r}
 H <- generateSimilarityKernel(unifrac)
@@ -127,19 +128,19 @@ Kernel penalized regression models can be fit using the `KPR` function.
 kpr.out <- KPR(designMatrix = Z, covariates = E, Y = Y, H = H, Q = Q, REML = TRUE)
 ```
 
-The `designMatrix` parameter refers to the data matrix with penalized
-variables, and the `covariates` paramater refers to data with
+The `designMatrix` parameter refers to the data matrix with variables
+subject to penalization, and the `covariates` paramater refers to data with
 unpenalized variables. In the notation detailed above, `designMatrix`
 and `covariates` are referred to as $\mathbf{Z}$ and $\mathbf{E}$
 respectively.
 
 The `KPR` function returns an object of class `KPR`, which includes
 all of the data used to fit the model, `beta.hat` and `eta.hat`
-vectors, and information regarding the tuning parameter $\lambda$.
+vectors, and information regarding the selection of the tuning parameter $\lambda$.
 
 Finding an optimal value of $\lambda$ is a primary computational
 challenge in fitting kernel penalized regression models. The `KPR`
-function offers two methods for finding $\lambda$. The default
+function offers two methods for estimating $\lambda$. The
 preferred method is to reformulate the model as a ridge regression
 problem, and find $\lambda$ with Restricted maximum likelihood (REML)
 using the `nlme` package. This option is set to `TRUE` by default. If
@@ -187,10 +188,12 @@ $$\textrm{H}_{o}: \beta_j = 0, \textrm{ H}_{\textrm{a}}: \beta_j \neq 0$$
 
 for $j \in 1, 2, ... p$. You can also analyze the output of `KPR` with the
 `biplot` function. This will generate a "supervised" biplot using the
-Generalized Matrix Decomposition[CITATION?], in which the arrows
-plotted are selected by one of the inference methods detailed
+Generalized Matrix Decomposition[CITATION?], in which the  points
+represent samples and are colored with respect to the outcome
+$\mathbf{Y}$. The arrows plotted represent variables that have been
+selected by one of the inference methods detailed
 above (i.e. deemed significant, controlling Type 1 error at
-0.05). Additionally, the points are colored with respect to the outome $\mathbf{Y}$.
+0.05).
 
 ```{r fig, fig.height = 5.5, fig.width = 7, fig.align = "center"}
 biplot(kpr.out, method = "GMD")
