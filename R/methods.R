@@ -102,7 +102,7 @@ biplot.KPR <- function(x, ...)
   yaxp = axTicks(2)
 
   infer.out <- inference(x, ...)
-  if (length(x$lambda) > 1) p.values <- infer.out[,x$lambda.min.index]
+  if (length(x$lambda) > 1) p.values <- infer.out[,1]
   else p.values <- infer.out
   signif <- which(p.values < 0.05) # we keep track of the significant coefficients
 

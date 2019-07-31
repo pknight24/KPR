@@ -4,10 +4,12 @@
 \alias{generateSimilarityKernel}
 \title{Generate a similarity kernel from a distance matrix}
 \usage{
-generateSimilarityKernel(D)
+generateSimilarityKernel(D, squareValues = TRUE)
 }
 \arguments{
 \item{D}{A square distance matrix. This may also be an object of class "dist".}
+
+\item{squareValues}{Logical, indicating whether to square the values in `D` before building the similarity kernel.}
 }
 \value{
 A similarity kernel matrix of the same dimension as the input matrix.

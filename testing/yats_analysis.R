@@ -10,7 +10,7 @@ otu.csv <- t(read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsune
 bacteria.id <- otu.csv[1,]
 otu <- otu.csv[-1,]
 
-bact.nameid.csv <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_for_KPR_paper/bacteria_id.csv", stringsAsFactors = FALSE) %>% filter(bact.id %in% bacteria.id)
+bact.nameid.csv <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_KPR_paper/bacteria_id.csv", stringsAsFactors = FALSE) %>% filter(bact.id %in% bacteria.id)
 
 bact.names.full <- sapply(bacteria.id, function(id){ # this should order the names with respect to the otu table
     name.id <- which(bact.nameid.csv$bact.id == id)
@@ -29,12 +29,12 @@ otu.df <- as.data.frame(otu)
 otu.df$id <- clean.names
 
 
-ec.csv <- t(read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_for_KPR_paper/kegg_ec_cleaned.csv"))
+ec.csv <- t(read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_KPR_paper/kegg_ec_cleaned.csv"))
 
 ec.df <- as.data.frame(ec.csv)
 ec.df$id <- sapply(rownames(ec.csv), function(s) substr(s, start = 1, stop = nchar(s) - 7))
 
-age.csv <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_for_KPR_paper/age_id.csv", header=FALSE, stringsAsFactors = FALSE) %>% filter(V1 %in% clean.names) %>%
+age.csv <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_KPR_paper/age_id.csv", header=FALSE, stringsAsFactors = FALSE) %>% filter(V1 %in% clean.names) %>%
     transmute(id = V1, age = V2)
 
 
@@ -90,15 +90,18 @@ unifrac <- sapply(1:100, function(i){
 
 # load in the Q matrix (we are assuming that this is ordered correctly)
 
-Q <- as.matrix(read.table("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_for_KPr_paper/Q.txt"))
+Q <- as.matrix(read.table("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_KPR_paper/Q.txt"))
 
 
-geography.csv <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_for_KPr_paper/geography.csv")
+geography.csv <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/used_in_KPR_paper/geography.csv")
 
 patristic.raw <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/Study_850_output/patristic149.txt", stringsAsFactors = FALSE)
 
 patristic <- as.matrix(patristic.raw[,-1])
 rownames(patristic) <- patristic.raw$X
+
+brownian <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/Study_850_output/BrownianMotion149.txt")[,-1] %>% as.matrix
+
 
 Q_ <- generateSimilarityKernel(patristic)
 

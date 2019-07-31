@@ -86,13 +86,13 @@ The `generateSimilarityKernel` function computes Gower's centered
 similarity kernel $\mathbf{K}$ from any distance matrix $\mathbf{D}$,
 specifically
 
-$$\mathbf{K} = -\frac{1}{2}\mathbf{J}\mathbf{D}\mathbf{J}$$
+$$\mathbf{K} = -\frac{1}{2}\mathbf{J}\mathbf{D^{2}}\mathbf{J}$$
 
 where $\mathbf{J}$ is a centering matrix.
 
 Additionally, if the resulting similarity kernel has any negative or very small
 eigenvalues, `generateSimilarityKernel` will set these eigenvalues to
-$10^{-10}$. This essentially forces the kernel to "behave" as a positive
+the smallest positive (or "large enough") eigenvalue divided by 2. This essentially forces the kernel to "behave" as a positive
 semidefinite matrix.
 
 ```{r}
@@ -111,6 +111,7 @@ The matrix of covariates $\mathbf{E}$ is produced from the vector of
 countries given in the `yatsunenko` object. This will allow us to fit
 our penalized regression model, while controlling for each subject's
 country of origin. 
+
 ```{r}
 counts.clr <- log(counts + 1) - apply(log(counts + 1), 1, mean)
 Z <- apply(counts.clr, 2, function(x) x - mean(x)) # column center the centered log ratio counts
@@ -123,7 +124,7 @@ E <- model.matrix(~ geo)[,-1]
 Kernel penalized regression models can be fit using the `KPR` function.
 
 ```{r}
-kpr.out <- KPR(designMatrix = Z, covariates = E, Y = Y, H = H, Q = Q)
+kpr.out <- KPR(designMatrix = Z, covariates = E, Y = Y, H = H, Q = Q, REML = TRUE)
 ```
 
 The `designMatrix` parameter refers to the data matrix with penalized
