@@ -27,7 +27,7 @@ KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
 
 \item{K}{The number of folds in the cross validation search.}
 
-\item{useCpp}{Indicate whether to use the C++ backend for cross-validation.}
+\item{useCpp}{Indicate whether to use the C++ backend for cross-validation. This is ignored if `REML` is set to TRUE.}
 
 \item{seed}{Set a seed for random number generation.}
 }

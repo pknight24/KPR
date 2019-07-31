@@ -103,7 +103,7 @@ rownames(patristic) <- patristic.raw$X
 brownian <- read.csv("C:/Users/pknight/Dropbox/Biplots_generalized/Data/Yatsunenko/Study_850_output/BrownianMotion149.txt")[,-1] %>% as.matrix
 
 
-Q_ <- generateSimilarityKernel(patristic)
+Q_ <- generateSimilarityKernel(patristic, squareValues = TRUE)
 
 geography <- sapply(rownames(Xraw), function(s) filter(geography.csv, id == s)$geo)
 
@@ -141,7 +141,7 @@ permuted <- permute::shuffle(length(Y))
 Y.perm <- Y[permuted]
 
 # model fitting and inference
-kpr.out <- KPR(designMatrix = X, Y = Y, Q=Q)
+kpr.out <- KPR(designMatrix = X, Y = Y, Q=Q_)
 
 infer.out <- inference(kpr.out, method = "GMD")[,1]
 

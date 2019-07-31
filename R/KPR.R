@@ -11,7 +11,7 @@
 #' @param n.lambda The number of lambda values to test through the cross validation search. The values are generated internally.
 #' @param lambda A vector of lambda values to test through cross validation. This will override the sequence generated with the \code{n.lambda} parameter.
 #' @param K The number of folds in the cross validation search.
-#' @param useCpp Indicate whether to use the C++ backend for cross-validation.
+#' @param useCpp Indicate whether to use the C++ backend for cross-validation. This is ignored if `REML` is set to TRUE.
 #' @param seed Set a seed for random number generation.
 #' @return
 #' \item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}

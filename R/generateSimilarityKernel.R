@@ -16,12 +16,12 @@ generateSimilarityKernel <- function(D, squareValues = TRUE)
   else M <- -J %*% D %*% J / 2
 
   eigen.M <- eigen(M)
-  if (all(eigen.M$values >= 1^-5 )) return(M)
+  if (all(eigen.M$values >= 10^-5 )) return(M)
   else
   {
     cat("Correcting small and negative eigenvalues\n")
-    smallest <- min(eigen.M$values[eigen.M$values > 1^-5])
-    eigen.M$values[eigen.M$values < 1^-5 ] <- smallest / 2
+    smallest <- min(eigen.M$values[eigen.M$values > 10^-5])
+    eigen.M$values[eigen.M$values < 10^-5 ] <- smallest / 2
     M <- eigen.M$vectors %*% diag(eigen.M$values) %*% t(eigen.M$vectors)
     return(M)
   }

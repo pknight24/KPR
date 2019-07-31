@@ -193,5 +193,5 @@ above (i.e. deemed significant, controlling Type 1 error at
 0.05). Additionally, the points are colored with respect to the outome $\mathbf{Y}$.
 
 ```{r fig, fig.height = 5.5, fig.width = 7, fig.align = "center"}
-biplot(kpr.out, method = "hdi")
+biplot(kpr.out, method = "GMD")
 ```
