@@ -63,9 +63,9 @@ For the purposes of our examples, we will use data from the study by
 Yatsunenko et al (2012), which is included in the package. The
 `yatsunenko` object is a list containing raw microbe abundance data,
 UniFrac distances between subjects, patristic distances between
-genera, and the age of each subject. We will fit a kernel penalized regression model
-with the microbial abundances as the predictors, and subject age as
-the outcome.
+genera, and the country of origin and age of each subject. We will fit
+a kernel penalized regression model with the microbial abundances as
+the penalized variables, and subject age as the outcome.
 
 In order to incorporate these distance matrices into the regression
 model, we first need to convert them to similarity kernels, using a
@@ -79,16 +79,16 @@ age <- yatsunenko$age
 counts <- yatsunenko$raw.counts
 patristic <- yatsunenko$patristic
 unifrac <- yatsunenko$unifrac
+geo <- yatsunenko$geography
 ```
 
 The `generateSimilarityKernel` function computes Gower's centered
 similarity kernel $\mathbf{K}$ from any distance matrix $\mathbf{D}$,
 specifically
 
-$$\mathbf{K} = \frac{-1}{2}\mathbf{J}\mathbf{D}^{(2)}\mathbf{J}$$
+$$\mathbf{K} = -\frac{1}{2}\mathbf{J}\mathbf{D}\mathbf{J}$$
 
-where $\mathbf{J}$ is a centering matrix and $\mathbf{D}^{(2)}$
-denotes the squared entries of $\mathbf{D}$.
+where $\mathbf{J}$ is a centering matrix.
 
 Additionally, if the resulting similarity kernel has any negative or very small
 eigenvalues, `generateSimilarityKernel` will set these eigenvalues to
@@ -105,13 +105,17 @@ Variation matrices for compositional data, as used in [KPR CITATION].
 
 Finally, we will take the centered log ratio of the count data to
 account for sample quality, as well as center the age vector. Kernel
-penalized regression models are sensitive to scale, and thus the data
+penalized regression models are sensitive to scale, and thus the data 
 should be processed with this in mind before beginning the estimation procedure.
-
+The matrix of covariates $\mathbf{E}$ is produced from the vector of
+countries given in the `yatsunenko` object. This will allow us to fit
+our penalized regression model, while controlling for each subject's
+country of origin. 
 ```{r}
 counts.clr <- log(counts + 1) - apply(log(counts + 1), 1, mean)
 Z <- apply(counts.clr, 2, function(x) x - mean(x)) # column center the centered log ratio counts
 Y <- age - mean(age)
+E <- model.matrix(~ geo)[,-1]
 ```
 
 ## Estimation
@@ -119,16 +123,14 @@ Y <- age - mean(age)
 Kernel penalized regression models can be fit using the `KPR` function.
 
 ```{r}
-kpr.out <- KPR(designMatrix = Z, Y = Y, H = H, Q = Q)
+kpr.out <- KPR(designMatrix = Z, covariates = E, Y = Y, H = H, Q = Q)
 ```
 
 The `designMatrix` parameter refers to the data matrix with penalized
 variables, and the `covariates` paramater refers to data with
 unpenalized variables. In the notation detailed above, `designMatrix`
 and `covariates` are referred to as $\mathbf{Z}$ and $\mathbf{E}$
-respectively. In this example, we are not using a matrix of
-covariates, and so it is fine to leave that parameter missing from the
-function call.
+respectively.
 
 The `KPR` function returns an object of class `KPR`, which includes
 all of the data used to fit the model, `beta.hat` and `eta.hat`
