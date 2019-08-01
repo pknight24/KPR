@@ -206,13 +206,18 @@ remlEstimation <- function(Z, E, Y, H, Q, cov.missing)
   L.Q <- eigen.Q$vectors %*% diag(sqrt(eigen.Q$values))
   eigen.H <- eigen(H)
   L.H <- eigen.H$vectors %*% diag(sqrt(eigen.H$values))
-
   Z.tilde <- t(L.H) %*% Z.p %*% L.Q
   Y.tilde <- t(L.H) %*% Y.p
 
-  dummyID <- factor(rep(1, nrow(Z)))
-  lmm.fit <- suppressWarnings(lme(Y.tilde~1, random=list(dummyID = pdIdent(~-1 + Z.tilde))))
-  lambda.reml <- lmm.fit$sigma^2 / as.numeric(VarCorr(lmm.fit)[1,1])^2
+  u <- svd(Z.tilde)$u
+  s <- svd(Z.tilde)$d
+
+  dummyID <- factor(rep(1, n))
+  lmm.fit <- lme(Y.tilde~1, random=list(dummyID = pdIdent(~-1 + u %*% diag(s))))
+
+  beta.hat <- as.matrix(nlme::ranef(lmm.fit))[1,]
+
+  lambda.reml <- lmm.fit$sigma^2 / var(beta.hat)
 
   return(lambda.reml)
 

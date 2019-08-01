@@ -113,7 +113,7 @@ E <- model.matrix(~ geography) %>% (function(mat) mat[,-1])
 
 rm(temp.df, unifrac.csv, unifrac.df,
    age.csv, otu.df, otu, clean.names, otu.csv,
-   ec.csv, ec.df, ec.clr, ec.filtered, ec.cols.to.ignore,
+   ec.csv, ec.df, ec.clr, ec.cols.to.ignore,
    geography.csv)
 
 
@@ -141,7 +141,7 @@ permuted <- permute::shuffle(length(Y))
 Y.perm <- Y[permuted]
 
 # model fitting and inference
-kpr.out <- KPR(designMatrix = X, Y = Y, Q=Q_)
+kpr.out <- KPR(designMatrix = X, covariates = E, Y = Y, Q=Q_)
 
 infer.out <- inference(kpr.out, method = "GMD")[,1]
 
