@@ -215,9 +215,7 @@ remlEstimation <- function(Z, E, Y, H, Q, cov.missing)
   dummyID <- factor(rep(1, n))
   lmm.fit <- lme(Y.tilde~1, random=list(dummyID = pdIdent(~-1 + u %*% diag(s))))
 
-  beta.hat <- as.matrix(nlme::ranef(lmm.fit))[1,]
-
-  lambda.reml <- lmm.fit$sigma^2 / var(beta.hat)
+  lambda.reml <- lmm.fit$sigma^2 / as.numeric(VarCorr(lmm.fit)[1,1])
 
   return(lambda.reml)
 
