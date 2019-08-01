@@ -46,3 +46,7 @@ to \code{lambda.min} from the \code{betahat} matrix.}
 \description{
 Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.
 }
+\references{
+Randolph et al. (2018) The Annals of Applied Statistics
+(\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
+}

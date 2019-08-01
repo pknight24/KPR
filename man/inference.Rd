@@ -21,3 +21,10 @@ Before calling \code{ridge.proj}, we transform the data with a Cholesky decompos
 
 The value of lambda used in all inference methods is determined in the KPR model fit.
 }
+\references{
+Wang et al. Technical report.
+
+Dezeure et al. (2014) Statistical Science (\href{https://arxiv.org/abs/1408.4026}{arXiv})
+
+Zhao and Shojaie. (2016) Biometrics (\href{https://arxiv.org/abs/1506.08339}{arXiv})
+}

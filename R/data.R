@@ -23,7 +23,7 @@
 #'   \item{\code{age}}{The age (in years) of each subject.}
 #'   \item{\code{patristic}}{Patristic differences between each of the 149 genera.}
 #'   \item{\code{unifrac}}{Unweighted UniFrac distances bewteen each of the 100 samples.}
-#'   \item{\code{ec}}{Enzyme commission data; see the paper cited below for reference.}
+#'   \item{\code{ec}}{Enzyme commission (ec) summaries of bacterial genome data; see the paper cited below for reference.}
 #'   \item{\code{geography}}{Country of origin for each sample.}
 #' }
 #' @references Yatsunenko et al. (2012) Nature (\href{https://www.ncbi.nlm.nih.gov/pubmed/22699611}{PubMed})

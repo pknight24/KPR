@@ -21,3 +21,6 @@ A list of matrices involved in the decomposition.
 \description{
 Computes the generalized matrix decomposition of a matrix X with respect to H and Q.
 }
+\references{
+Wang et al. Technical report.
+}

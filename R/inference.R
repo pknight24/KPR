@@ -14,6 +14,11 @@
 #' @importFrom stats pnorm
 #' @importFrom hdi ridge.proj
 #' @importFrom Grace grace.test
+#' @references Wang et al. Technical report.
+#'
+#' Dezeure et al. (2014) Statistical Science (\href{https://arxiv.org/abs/1408.4026}{arXiv})
+#'
+#' Zhao and Shojaie. (2016) Biometrics (\href{https://arxiv.org/abs/1506.08339}{arXiv})
 #' @export
 inference <- function(KPR.output, method = "GMD", ...)
 {

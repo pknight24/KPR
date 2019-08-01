@@ -7,6 +7,7 @@
 #' @param Q A p x p variable-wise similarity kernel.
 #' @param K The number of GMD components to include in the decomposition.
 #' @return A list of matrices involved in the decomposition.
+#' @references Wang et al. Technical report.
 #' @export
 GMD <- function(X, H, Q, K)
 {

@@ -55,9 +55,21 @@ summary.KPR <- function(object, ...)
 
 }
 
+
+#' A "supervised" GMD biplot
+#'
+#' This plots a GMD biplot of an object of class \code{KPR}. The axes correspond to first and second
+#' GMD components of the data, as described by Wang et al. \code{biplot.KPR}
+#' performs inference on the \code{KPR} object, and plots arrows corresponding to
+#' penalized variables deemed significant. The points represent samples and are
+#' colored with respect to the response vector \code{Y}.
+#'
+#' @param x An object of class \code{KPR}
+#' @param ... Additional parameters, used by the \code{inference} function call.
 #' @importFrom viridis plasma
 #' @importFrom graphics arrows axTicks axis plot points text legend
 #' @importFrom stats quantile
+#' @references Wang et al. Technical report.
 #' @export
 biplot.KPR <- function(x, ...)
 {
