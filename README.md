@@ -28,4 +28,4 @@ to use with the `method` parameter.
 inference(kpr.out, method = "GMD")
 ```
 
-For a more thorough example, see [the vignette](pknight24.github.io/KPR).
+For a more thorough example, see [the vignette](https://pknight24.github.io/KPR).
