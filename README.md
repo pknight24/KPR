@@ -17,7 +17,7 @@ Model fitting is performed with the `KPR()` function.
 kpr.out <- KPR(designMatrix = X, Y = Y, H = H, Q = Q)
 ```
 
-The `kpr.out` object has class `KPR`, includes all of the data used to
+The `kpr.out` object has class `KPR` and includes all of the data used to
 fit the model, as well as coefficient estimates.
 
 Several high-dimensional inference procedures are provided for testing
