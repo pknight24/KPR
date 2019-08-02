@@ -1,0 +1,225 @@
+---
+title: "KPR: Kernel Penalized Regression"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{KPR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+The `KPR` package provides estimation and inference methods for kernel
+penalized regression models, designed for doubly-structured high
+dimensional data. Kernel penalized regression is an extension of
+ridge regression that allows for the inclusion of external sample-wise and
+parameter-wise structure, expressed through similarity matrices
+(kernels). For example, a researcher analyzing human microbiome data
+may want a regression model that incorporates UniFrac distances between samples (and/or
+phylogenetic distances between microbes). `KPR` provides both
+estimation and inference for individual variables in a penalized
+regression model that accounts for this type of prior structure among
+samples and variables. For further reading on the theory and
+application of kernel penalized regression models, see (Randolph et
+al, 2018).
+
+##### Notation and Model Formulation
+
+Kernel penalized regression models take the form
+
+$$\mathbb{E}(\mathbf{Y}) = \mathbf{Z}\beta + \mathbf{E}\eta$$
+
+where $\mathbf{Y}$ is an $n \times 1$ vector of continous outcomes, $\mathbf{Z}$
+is an $n \times p$ data matrix with columns corresponding to
+*penalized* variables, and $\mathbf{E}$ is an $n \times r$ matrix
+whose columns represent covariates that remain unpenalized.
+$\beta$ is a $p \times 1$ vector of regression coefficients
+corresponding to $\mathbf{Z}$, and $\eta$ is an $r \times 1$ vector of
+coefficients for $\mathbf{E}$
+
+The coefficient vectors $\beta$ and $\eta$ are estimated by the following optimization problem:
+
+$$\hat{\beta}, \hat{\eta} = \mathop{\mathrm{arg\,min}}_{\beta, \eta}
+  \left\{\Vert \mathbf{Y} - \mathbf{Z}\beta - \mathbf{E}\eta
+    \Vert^2_{H} + \lambda\Vert \beta \Vert^2_{Q^{-1}}\right\}$$
+
+$\mathbf{H}$ denotes an $n \times n$ kernel of sample similarities, and
+$\mathbf{Q}$ denotes the $p \times p$ kernel representing prior
+structure of the variables of $\mathbf{Z}$. Note that $n$
+represents the number of samples, $p$ the number of penalized terms, and $r$ the number of
+unpenalized terms. The parameter $\lambda$ is a positive number that
+determines the strength of regularization.
+
+For any positive definite $m \times m$ matrix $\mathbf{A}$, we define
+$\Vert x\Vert_{A}^{2}$ as $x^\top\mathbf{A}x$ for $x \in \mathbb{R}^m$. 
+It is assumed throughout that $\mathbf{H}$ and $\mathbf{Q}$ are both positive definite.
+
+## Data processing
+
+For the purposes of our examples, we will use data from the study by
+(Yatsunenko et al, 2012), which is included in the package. The
+`yatsunenko` object is a list containing raw microbe abundance data,
+UniFrac distances between subjects, patristic distances between
+genera, and the country of origin and age of each subject. We will fit
+a kernel penalized regression model with the microbial abundances as
+the penalized variables, and subject age as the outcome.
+
+In order to incorporate these distance matrices into the regression
+model, we first need to convert them to similarity kernels, using a
+function provided by the `KPR` package.
+
+
+```r
+library(KPR)
+data(yatsunenko)
+
+age <- yatsunenko$age
+counts <- yatsunenko$raw.counts
+patristic <- yatsunenko$patristic
+unifrac <- yatsunenko$unifrac
+geo <- yatsunenko$geography
+```
+
+The `generateSimilarityKernel` function computes Gower's centered
+similarity kernel $\mathbf{K}$ from any distance matrix $\mathbf{D}$,
+specifically
+
+$$\mathbf{K} = -\frac{1}{2}\mathbf{J}\mathbf{D}^{(2)}\mathbf{J}$$
+
+where $\mathbf{J}$ is a centering matrix, and $\mathbf{D}^{(2)}$
+denotes a matrix of squared distances.
+
+Additionally, if the resulting similarity kernel has any negative or very small
+eigenvalues, `generateSimilarityKernel` will set these eigenvalues to
+the smallest positive (or "large enough") eigenvalue divided
+by 2. This essentially forces the kernel to "behave" as a positive definite matrix.
+
+
+```r
+H <- generateSimilarityKernel(unifrac)
+#> Correcting small and negative eigenvalues
+Q <- generateSimilarityKernel(patristic)
+#> Correcting small and negative eigenvalues
+```
+
+The `KPR` package also provides a function (`aitchisonVariation`) to generate Aitchison
+Variation matrices for compositional data, as used in (Randolph et al,
+2018).
+
+Finally, we will take the centered log ratio of the count data to
+account for sample quality, as well as center the age vector. Kernel
+penalized regression models are sensitive to scale, and thus the data 
+should be processed with this in mind before beginning the estimation procedure.
+The matrix of covariates $\mathbf{E}$ is produced from the vector of
+countries given in the `yatsunenko` object. This will allow us to fit
+our penalized regression model, while controlling for each subject's
+country of origin. 
+
+
+```r
+counts.clr <- log(counts + 1) - apply(log(counts + 1), 1, mean)
+Z <- apply(counts.clr, 2, function(x) x - mean(x)) # column center the centered log ratio counts
+Y <- age - mean(age)
+E <- model.matrix(~ geo)[,-1]
+```
+
+## Estimation
+
+Kernel penalized regression models can be fit using the `KPR` function.
+
+
+```r
+kpr.out <- KPR(designMatrix = Z, covariates = E, Y = Y, H = H, Q = Q, REML = TRUE)
+```
+
+The `designMatrix` parameter refers to the data matrix with variables
+subject to penalization, and the `covariates` paramater refers to data with
+unpenalized variables. In the notation detailed above, `designMatrix`
+and `covariates` are referred to as $\mathbf{Z}$ and $\mathbf{E}$
+respectively.
+
+The `KPR` function returns an object of class `KPR`, which includes
+all of the data used to fit the model, `beta.hat` and `eta.hat`
+vectors, and information regarding the selection of the tuning parameter $\lambda$.
+
+Finding an optimal value of $\lambda$ is a primary computational
+challenge in fitting kernel penalized regression models. The `KPR`
+function offers two methods for estimating $\lambda$. The
+preferred method is to reformulate the model as a ridge regression
+problem, and find $\lambda$ with Restricted maximum likelihood (REML)
+using the `nlme` package. This option is set to `TRUE` by default. If
+the `REML` parameter is set to `FALSE`, a value of $\lambda$ is computed
+using cross validation from a grid generated internally.
+You may also pass one or more values of $\lambda$ to the function with
+the `lambda` parameter. If more than one value is given, the `KPR`
+function will find the optimal value through cross validation.
+
+When more than one value of $\lambda$ is evaluated via cross
+validation, the `beta.hat` and `eta.hat`
+fields will be returned as matrices, where each column corresponds to
+a value of lambda and the rows correspond to the parameters. The
+`KPR` object will also include additonal pertinent information, such
+as the $\lambda$ value that produced the minimum sum of squared errors
+in the cross validation process. See `help(KPR)` for more information.
+
+## Inference
+
+The `KPR` package provides a single interface for performing inference
+on fitted kernel penalized regression models through the `inference`
+function. The input to `inference` must be an object of class `KPR`
+(i.e. the output from running the `KPR` function).
+
+
+```r
+infer.out <- inference(kpr.out, method = "GMD")
+```
+
+The `inference` function includes implementations of multiple
+inferential procedures for high dimensional regression models. You
+can indicate which procedure to use by setting the `method` parameter.
+
+The inference methods currently implemented are:
+
+* (default) the GMD inference (Wang) indicated by setting `method
+  = "GMD"`
+* the Ridge projection method from the `hdi` package (Dezeure et al, 2014)
+  indicated with `method = "hdi"`
+* the Grace inference (Zhao and Shojaie, 2016), indicated with `method = "Grace"`
+
+`inference` returns a vector or matrix of p-values corresponding to
+each element of $\hat{\beta}$, testing the hypothesis
+
+$$\textrm{H}_{o}: \beta_j = 0, \textrm{ H}_{\textrm{a}}: \beta_j \neq 0$$
+
+for $j \in 1, 2, ... p$. You can also analyze the output of `KPR` with the
+`biplot` function. This will generate a "supervised" biplot using the
+Generalized Matrix Decomposition (Wang), in which the  points
+represent samples and are colored with respect to the outcome
+$\mathbf{Y}$. The arrows plotted represent variables that have been
+selected by one of the inference methods detailed
+above (i.e. deemed significant, controlling Type 1 error at
+0.05).
+
+
+```r
+biplot(kpr.out, method = "GMD")
+```
+
+<img src="figure/fig-1.png" title="plot of chunk fig" alt="plot of chunk fig" style="display: block; margin: auto;" />
+
+## References
+   -  Buhlmann, P. (2013). Statistical significance in
+   high-dimensional linear models. Bernoulli, 19, 1212-1242.
+   -  Dezeure, R. et al (2014). High-dimensional inference: 
+   confidence intervals, p-values and R-Software hdi. Statistical Science, 30, 10.1214/15-STS527. 
+   -  Lampe, J.W. et al (2019). Colonic mucosal and exfoliome
+     transcriptomic profiling and fecal microbiome response to a
+     flaxseed lignan extract intervention in humans. American Journal
+     of Clinical Nutrition, 110, 2, 377-390.
+   -  Randolph, T. et al (2018). Kernel-penalized regression for
+      analysis of microbiome data. The Annals of Applied Statistics, 12, no. 1, 540-566.
+   -  Wang, Y. et al. Generalized Matrix Decomposition Regression. Technical report.
+   -  Wang, Y. et al. The GMD-biplot and its application to microbiome data. Technical report.
+   -  Yatsunenko, T. et al (2012). Human gut microbiome viewed across 
+   age and geography. Nature, 486, 222-227. 
+   -  Zhao, S., and Shojaie, A. (2016). A signifiance test 
+   for graph-constrained estimation. Biometrics, 72, 484-493.
