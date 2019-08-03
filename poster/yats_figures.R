@@ -80,3 +80,10 @@ pval.plot <- g + geom_point(aes(x = idx, y = infer.out, col=Class ), size=3) +
     theme(legend.position = "none")
 
 cowplot::plot_grid(pval.plot, effect.plot, nrow=2)
+
+
+load("poster/subset110_genus.RData")
+
+pruned <- prune_taxa(results.df$Genus, subset110_genus)
+
+plot_tree(pruned, color="Class", label.tips="Genus")
