@@ -14,6 +14,7 @@
 #' @param useCpp Indicate whether to use the C++ backend for cross-validation. This is ignored if `REML` is set to TRUE.
 #' @param seed Set a seed for random number generation.
 #' @param scale Logical, indicates whether to scale \code{Q} and the design matrix.
+#' @param ... Additional parameters passed to the GMD inference
 #' @return
 #' \item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
 #' \item{eta.hat}{A matrix of estimated coefficients for the unpenalized variables, where each column corresponds to a different value of lambda.}
@@ -25,15 +26,20 @@
 #' \item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector.}
 #' \item{cv.errors}{The error matrix generated in the cross-validation procedure.}
 #' \item{REML}{Was REML used to find \code{lambda}?}
-#' @importFrom stats sd
+#' \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
+#' @importFrom stats sd pnorm
 #' @importFrom Rcpp sourceCpp
 #' @importFrom nlme lme pdIdent VarCorr
+#' @importFrom natural olasso_cv
+#' @importFrom glmnet cv.glmnet glmnet
 #' @references Randolph et al. (2018) The Annals of Applied Statistics
 #' (\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
+#'
+#' Wang et al. Technical report.
 #' @useDynLib KPR, .registration = TRUE
 #' @export
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
-                REML = TRUE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed, scale = FALSE)
+                REML = TRUE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed, scale = FALSE, ...)
 {
   if (scale)
   {
@@ -138,6 +144,7 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
               lambda.1se.index = lambda.1se.index,
               cv.errors = errors,
               REML = REML)
+  output$p.values <- GMD.inference(output, ...)
   class(output) <- "KPR"
 
   return(output)

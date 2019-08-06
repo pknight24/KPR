@@ -54,9 +54,9 @@ H.rand <- random %*% t(random)
 
 ### Model fitting
 
-kpr.out <- KPR(designMatrix = counts.final, Y = Y, Q = Q, scale=FALSE)
+kpr.out <- KPR(designMatrix = counts.final, Y = Y, Q = Q, H = H, scale=TRUE)
 
-infer.out <- inference(kpr.out, method = "GMD")
+infer.out <- kpr.out$p.values
 
 effects <- kpr.out$beta.hat
 

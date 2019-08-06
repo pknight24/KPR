@@ -6,7 +6,7 @@
 \usage{
 KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
   Q = diag(ncol(designMatrix)), REML = TRUE, n.lambda = 200, lambda,
-  K = 5, useCpp = TRUE, seed, scale = FALSE)
+  K = 5, useCpp = TRUE, seed, scale = FALSE, ...)
 }
 \arguments{
 \item{designMatrix}{An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.}
@@ -32,6 +32,8 @@ KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
 \item{seed}{Set a seed for random number generation.}
 
 \item{scale}{Logical, indicates whether to scale \code{Q} and the design matrix.}
+
+\item{...}{Additional parameters passed to the GMD inference}
 }
 \value{
 \item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
@@ -44,6 +46,7 @@ to \code{lambda.min} from the \code{betahat} matrix.}
 \item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector.}
 \item{cv.errors}{The error matrix generated in the cross-validation procedure.}
 \item{REML}{Was REML used to find \code{lambda}?}
+\item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
 }
 \description{
 Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.
@@ -51,4 +54,6 @@ Fits a kernel penalized regression model using a design matrix X, response vecto
 \references{
 Randolph et al. (2018) The Annals of Applied Statistics
 (\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
+
+Wang et al. Technical report.
 }

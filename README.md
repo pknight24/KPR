@@ -18,15 +18,6 @@ kpr.out <- KPR(designMatrix = X, Y = Y, H = H, Q = Q)
 ```
 
 The `kpr.out` object has class `KPR` and includes all of the data used to
-fit the model, as well as coefficient estimates.
-
-Several high-dimensional inference procedures are provided for testing
-the significance of regression coefficients. You can run tests on your
-fitted model with the `inference()` function, specifying the procedure
-to use with the `method` parameter.
-
-```{r}
-inference(kpr.out, method = "GMD")
-```
+fit the model, as well as coefficient estimates and p-values based on the GMD inference.
 
 For a more thorough example, see [the vignette](https://pknight24.github.io/KPR).

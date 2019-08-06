@@ -28,12 +28,10 @@ print.KPR <- function(x, ...)
 #' @export
 summary.KPR <- function(object, ...)
 {
-  if (!exists("inference.method")) inference.method <- "GMD"
-
-  cat("Kernel Penalized Regression results, using", inference.method, "inference.\n\n")
+  cat("Kernel Penalized Regression results, using the GMD inference.\n\n")
 
 
-  infer.out <- inference(object, method = inference.method)
+  infer.out <- object$p.vals
 
   if (length(object$lambda) == 1)
   {
@@ -113,9 +111,8 @@ biplot.KPR <- function(x, ...)
   xaxp = axTicks(1)
   yaxp = axTicks(2)
 
-  infer.out <- inference(x, ...)
-  if (length(x$lambda) > 1) p.values <- infer.out[,1]
-  else p.values <- infer.out
+  if (length(x$lambda) > 1) p.values <- x$p.values[,1]
+  else p.values <- x$p.values
   signif <- which(p.values < 0.05) # we keep track of the significant coefficients
 
   #calculate coordinates

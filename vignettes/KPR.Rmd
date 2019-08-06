@@ -63,13 +63,12 @@ It is assumed throughout that $\mathbf{H}$ and $\mathbf{Q}$ are both positive de
 For the purposes of our examples, we will use data from the study by
 (Yatsunenko et al, 2012), which is included in the package. The
 `yatsunenko` object is a list containing raw microbe abundance data,
-UniFrac distances between subjects, patristic distances between
-genera, and the country of origin and age of each subject. We will fit
+ patristic distances between genera, and the country of origin and age of each subject. We will fit
 a kernel penalized regression model with the microbial abundances as
 the penalized variables, and subject age as the outcome.
 
-In order to incorporate these distance matrices into the regression
-model, we first need to convert them to similarity kernels, using a
+In order to incorporate the patristic distance matrix into the regression
+model, we first need to convert it to a similarity kernel, using a
 function provided by the `KPR` package.
 
 ```{r}
@@ -79,7 +78,6 @@ data(yatsunenko)
 age <- yatsunenko$age
 counts <- yatsunenko$raw.counts
 patristic <- yatsunenko$patristic
-unifrac <- yatsunenko$unifrac
 geo <- yatsunenko$geography
 ```
 
@@ -98,7 +96,6 @@ the smallest positive (or "large enough") eigenvalue divided
 by 2. This essentially forces the kernel to "behave" as a positive definite matrix.
 
 ```{r}
-H <- generateSimilarityKernel(unifrac)
 Q <- generateSimilarityKernel(patristic)
 ```
 
@@ -127,7 +124,7 @@ E <- model.matrix(~ geo)[,-1]
 Kernel penalized regression models can be fit using the `KPR` function.
 
 ```{r}
-kpr.out <- KPR(designMatrix = Z, covariates = E, Y = Y, H = H, Q = Q, REML = TRUE)
+kpr.out <- KPR(designMatrix = Z, covariates = E, Y = Y,  Q = Q, REML = TRUE)
 ```
 
 The `designMatrix` parameter refers to the data matrix with variables
@@ -162,43 +159,22 @@ in the cross validation process. See `help(KPR)` for more information.
 
 ## Inference
 
-The `KPR` package provides a single interface for performing inference
-on fitted kernel penalized regression models through the `inference`
-function. The input to `inference` must be an object of class `KPR`
-(i.e. the output from running the `KPR` function).
-
-```{r}
-infer.out <- inference(kpr.out, method = "GMD")
-```
-
-The `inference` function includes implementations of multiple
-inferential procedures for high dimensional regression models. You
-can indicate which procedure to use by setting the `method` parameter.
-
-The inference methods currently implemented are:
-
-* (default) the GMD inference (Wang) indicated by setting `method
-  = "GMD"`
-* the Ridge projection method from the `hdi` package (Dezeure et al, 2014)
-  indicated with `method = "hdi"`
-* the Grace inference (Zhao and Shojaie, 2016), indicated with `method = "Grace"`
-
-`inference` returns a vector or matrix of p-values corresponding to
+The output of `KPR` includes a vector (or matrix) of p-values corresponding to
 each element of $\hat{\beta}$, testing the hypothesis
 
 $$\textrm{H}_{o}: \beta_j = 0, \textrm{ H}_{\textrm{a}}: \beta_j \neq 0$$
 
-for $j \in 1, 2, ... p$. You can also analyze the output of `KPR` with the
+for $j \in 1, 2, ... p$. The p-values are being generated with the GMD
+inference procedure, outlined in (Wang). You can also analyze the output of `KPR` with the
 `biplot` function. This will generate a "supervised" biplot using the
 Generalized Matrix Decomposition (Wang), in which the  points
 represent samples and are colored with respect to the outcome
 $\mathbf{Y}$. The arrows plotted represent variables that have been
-selected by one of the inference methods detailed
-above (i.e. deemed significant, controlling Type 1 error at
+selected by the GMD inference (i.e. deemed significant, controlling Type 1 error at
 0.05).
 
 ```{r fig, fig.height = 5.5, fig.width = 7, fig.align = "center"}
-biplot(kpr.out, method = "GMD")
+biplot(kpr.out)
 ```
 
 ## References
