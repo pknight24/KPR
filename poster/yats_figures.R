@@ -2,6 +2,7 @@ library(KPR)
 library(dplyr)
 library(ggplot2)
 library(phyloseq)
+library(viridis)
 rm(list = ls())
 
 ### Load data
@@ -51,6 +52,21 @@ tax <- as.data.frame(taxonomy.mat, stringsAsFactors = FALSE) %>%
 random <- matrix(rnorm(100 * 149), 100, 149)
 H.rand <- random %*% t(random)
 
+### scaled data
+
+Qeig = eigen(Q)
+V = Qeig$vectors
+
+s1 = Qeig$values[1]
+Qscale = Q/s1
+
+ZV = counts.final %*% V
+ZVnorm = apply(ZV, 2, function(x) length(x)*x/norm(as.matrix(x),type = "F") )
+Zscale = ZVnorm %*% t(V)
+
+colnames(Zscale) <- colnames(counts.final)
+
+
 ### Model fitting
 
 kpr.out <- KPR(designMatrix = counts.final, Y = Y, Q = Q)
@@ -59,31 +75,40 @@ infer.out <- inference(kpr.out, method = "GMD")
 
 effects <- kpr.out$beta.hat
 
-results.df <- data.frame(tax, effects, infer.out) %>% filter(effects < 0.8)
+results.df <- data.frame(tax, effects, infer.out) %>% filter(effects < 0.8) %>%
+  group_by(Class) %>% mutate(numInClass = n()) %>% filter(numInClass > 2) %>%
+  select(-numInClass) %>% ungroup
 idx <- 1:nrow(results.df)
-
-
-# par(mfrow=c(2,1))
-# plot(infer.out, col=as.factor(tax$Class))
-# plot(effects, type="l")
-# abline(a = 0, b = 0, col="red")
-# par(mfrow=c(1,1))
 
 g <- ggplot(data = results.df) + theme_minimal()
 
-effect.plot <- g + geom_point(aes(x = idx, y = effects, col=Class ), size=3) +
+effect.plot <- g + geom_point(aes(x = idx, y = effects, col=Class ), size=1.5) +
     xlab("Index") + ylab("Effect size") +
-    geom_hline(yintercept = 0)
+    geom_hline(yintercept = 0) +
+    theme(legend.position = "none")
 
-pval.plot <- g + geom_point(aes(x = idx, y = infer.out, col=Class ), size=3) +
-    xlab("Index") + ylab("P-value") +
+pval.plot <- g + geom_point(aes(x = idx, y = infer.out, col=Class ), size=1.5) +
+    xlab("") + ylab("P-value") +
     theme(legend.position = "none")
 
 cowplot::plot_grid(pval.plot, effect.plot, nrow=2)
-
 
 load("poster/subset110_genus.RData")
 
 pruned <- prune_taxa(results.df$Genus, subset110_genus)
 
-plot_tree(pruned, color="Class", label.tips="Genus")
+plot_tree(pruned, color="Class", nodelabf=nodeplotblank)
+
+K <- counts.final %*% t(counts.final)
+K.sorted <- K[order(Y), order(Y)]
+# heatmap(K.sorted, Colv="Rowv", Rowv=NA, symm=TRUE, col=magma(256))
+
+K.Q <- counts.final %*% Q %*% t(counts.final)
+K.Q.sorted <- K.Q[order(Y), order(Y)]
+#heatmap(K.Q.sorted, Colv="Rowv", Rowv=NA, symm=TRUE, col=magma(256))
+
+K.Z <- ec.final %*% t(ec.final)
+K.Z.sorted <- K.Z[order(Y), order(Y)]
+# heatmap(K.Z.sorted, Colv="Rowv", Rowv=NA, symm=TRUE, col=magma(256))
+
+
