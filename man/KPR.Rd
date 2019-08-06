@@ -6,7 +6,7 @@
 \usage{
 KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
   Q = diag(ncol(designMatrix)), REML = TRUE, n.lambda = 200, lambda,
-  K = 5, useCpp = TRUE, seed)
+  K = 5, useCpp = TRUE, seed, scale = FALSE)
 }
 \arguments{
 \item{designMatrix}{An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.}
@@ -30,6 +30,8 @@ KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
 \item{useCpp}{Indicate whether to use the C++ backend for cross-validation. This is ignored if `REML` is set to TRUE.}
 
 \item{seed}{Set a seed for random number generation.}
+
+\item{scale}{Logical, indicates whether to scale \code{Q} and the design matrix.}
 }
 \value{
 \item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}

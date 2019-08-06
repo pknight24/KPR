@@ -52,24 +52,9 @@ tax <- as.data.frame(taxonomy.mat, stringsAsFactors = FALSE) %>%
 random <- matrix(rnorm(100 * 149), 100, 149)
 H.rand <- random %*% t(random)
 
-### scaled data
-
-Qeig = eigen(Q)
-V = Qeig$vectors
-
-s1 = Qeig$values[1]
-Qscale = Q/s1
-
-ZV = counts.final %*% V
-ZVnorm = apply(ZV, 2, function(x) length(x)*x/norm(as.matrix(x),type = "F") )
-Zscale = ZVnorm %*% t(V)
-
-colnames(Zscale) <- colnames(counts.final)
-
-
 ### Model fitting
 
-kpr.out <- KPR(designMatrix = counts.final, Y = Y, Q = Q)
+kpr.out <- KPR(designMatrix = counts.final, Y = Y, Q = Q, scale=FALSE)
 
 infer.out <- inference(kpr.out, method = "GMD")
 
@@ -79,6 +64,9 @@ results.df <- data.frame(tax, effects, infer.out) %>% filter(effects < 0.8) %>%
   group_by(Class) %>% mutate(numInClass = n()) %>% filter(numInClass > 2) %>%
   select(-numInClass) %>% ungroup
 idx <- 1:nrow(results.df)
+
+
+### Plotting pvals and coefs
 
 g <- ggplot(data = results.df) + theme_minimal()
 
@@ -93,11 +81,15 @@ pval.plot <- g + geom_point(aes(x = idx, y = infer.out, col=Class ), size=1.5) +
 
 cowplot::plot_grid(pval.plot, effect.plot, nrow=2)
 
+### Tree plot
+
 load("poster/subset110_genus.RData")
 
 pruned <- prune_taxa(results.df$Genus, subset110_genus)
 
 plot_tree(pruned, color="Class", nodelabf=nodeplotblank)
+
+### Kernel heatmaps
 
 K <- counts.final %*% t(counts.final)
 K.sorted <- K[order(Y), order(Y)]
@@ -110,5 +102,3 @@ K.Q.sorted <- K.Q[order(Y), order(Y)]
 K.Z <- ec.final %*% t(ec.final)
 K.Z.sorted <- K.Z[order(Y), order(Y)]
 # heatmap(K.Z.sorted, Colv="Rowv", Rowv=NA, symm=TRUE, col=magma(256))
-
-

@@ -13,6 +13,7 @@
 #' @param K The number of folds in the cross validation search.
 #' @param useCpp Indicate whether to use the C++ backend for cross-validation. This is ignored if `REML` is set to TRUE.
 #' @param seed Set a seed for random number generation.
+#' @param scale Logical, indicates whether to scale \code{Q} and the design matrix.
 #' @return
 #' \item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
 #' \item{eta.hat}{A matrix of estimated coefficients for the unpenalized variables, where each column corresponds to a different value of lambda.}
@@ -32,19 +33,24 @@
 #' @useDynLib KPR, .registration = TRUE
 #' @export
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
-                REML = TRUE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed)
+                REML = TRUE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed, scale = FALSE)
 {
-  # eigen.Q <- eigen(Q)
-  # Q <- (1/eigen.Q$values[1]) * Q # standardize Q
-  # P.Q <- eigen.Q$vectors %*% t(eigen.Q$vectors)
-  #
-  # XU <- designMatrix %*% eigen.Q$vectors
-  # XU.std <- apply(X, 2, function(x) x / norm(x, type="2"))
+  if (scale)
+  {
+    eigen.Q <- eigen(Q)
+    Q <- (1/eigen.Q$values[1]) * Q # standardize Q
 
+    XU <- designMatrix %*% eigen.Q$vectors
+    XU.std <- apply(XU, 2, function(x) x / sqrt(as.vector(t(x) %*% H %*% x) ))
+
+    Z <- XU.std %*% t(eigen.Q$vectors)
+    colnames(Z) <- colnames(designMatrix)
+  }
+  else Z <- designMatrix
 
 
   cov.missing <- missing(covariates)
-  Z <-  designMatrix # XU.std %*% t(eigen.Q$vectors)# penalized matrix
+  Z <-  designMatrix # penalized matrix
   n <- nrow(Z)
   p <- ncol(Z) # number of penalized variables
   if (cov.missing) E <- matrix(0, n) # arbitrarily set E to a zero vector if no covariates are given
