@@ -6,7 +6,7 @@
 \usage{
 KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
   Q = diag(ncol(designMatrix)), REML = TRUE, n.lambda = 200, lambda,
-  K = 5, useCpp = TRUE, seed, scale = FALSE, ...)
+  K = 5, useCpp = TRUE, seed, scale = FALSE, inference = TRUE, ...)
 }
 \arguments{
 \item{designMatrix}{An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.}
@@ -32,6 +32,8 @@ KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
 \item{seed}{Set a seed for random number generation.}
 
 \item{scale}{Logical, indicates whether to scale \code{Q} and the design matrix.}
+
+\item{inference}{Logical, indicates whether to compute p-values for penalized regression coefficients with the GMD inference.}
 
 \item{...}{Additional parameters passed to the GMD inference}
 }

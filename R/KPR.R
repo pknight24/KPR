@@ -14,6 +14,7 @@
 #' @param useCpp Indicate whether to use the C++ backend for cross-validation. This is ignored if `REML` is set to TRUE.
 #' @param seed Set a seed for random number generation.
 #' @param scale Logical, indicates whether to scale \code{Q} and the design matrix.
+#' @param inference Logical, indicates whether to compute p-values for penalized regression coefficients with the GMD inference.
 #' @param ... Additional parameters passed to the GMD inference
 #' @return
 #' \item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
@@ -39,7 +40,8 @@
 #' @useDynLib KPR, .registration = TRUE
 #' @export
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
-                REML = TRUE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed, scale = FALSE, ...)
+                REML = TRUE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed, scale = FALSE,
+                inference = TRUE, ...)
 {
   if (scale)
   {
@@ -144,7 +146,8 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
               lambda.1se.index = lambda.1se.index,
               cv.errors = errors,
               REML = REML)
-  output$p.values <- GMD.inference(output, ...)
+  if (inference) output$p.values <- GMD.inference(output, ...)
+  else output$p.values  <- NULL
   class(output) <- "KPR"
 
   return(output)

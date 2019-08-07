@@ -54,7 +54,7 @@ H.rand <- random %*% t(random)
 
 ### Model fitting
 
-kpr.out <- KPR(designMatrix = counts.final, Y = Y, Q = Q, H = H, scale=TRUE)
+kpr.out <- KPR(designMatrix = counts.final, Y = Y,Q = Q, scale=FALSE)
 
 infer.out <- kpr.out$p.values
 
@@ -70,17 +70,14 @@ idx <- 1:nrow(results.df)
 
 g <- ggplot(data = results.df) + theme_minimal()
 
-effect.plot <- g + geom_point(aes(x = idx, y = effects, col=Class ), size=1.5) +
+effect.plot <- g + geom_point(aes(x = idx, y = effects, col=Class, shape = infer.out < 0.05),
+                              size=3.5) +
     xlab("Index") + ylab("Effect size") +
     geom_hline(yintercept = 0) +
-    theme(legend.position = "none")
-
-pval.plot <- g + geom_point(aes(x = idx, y = infer.out, col=Class ), size=1.5) +
-    xlab("") + ylab("P-value") +
-    theme(legend.position = "none")
-
-cowplot::plot_grid(pval.plot, effect.plot, nrow=2)
-
+    ggtitle("with Q") +
+    ylim(-.6, .6) +
+    theme(legend.position = "none", axis.text=element_text(size=14),
+          axis.title = element_text(size=16), plot.title = element_text(size=20))
 ### Tree plot
 
 load("poster/subset110_genus.RData")
@@ -91,14 +88,29 @@ plot_tree(pruned, color="Class", nodelabf=nodeplotblank)
 
 ### Kernel heatmaps
 
+order <- findInterval(Y, sort(Y))
+sample.col <- plasma(length(order))[order]
+
 K <- counts.final %*% t(counts.final)
 K.sorted <- K[order(Y), order(Y)]
 # heatmap(K.sorted, Colv="Rowv", Rowv=NA, symm=TRUE, col=magma(256))
+eigen.K <- eigen(K)
+plot(x = eigen.K$vectors[,1] * sqrt(eigen.K$values[1]),
+     y = eigen.K$vectors[,2] * sqrt(eigen.K$values[2]),
+     col = sample.col, pch=19)
 
 K.Q <- counts.final %*% Q %*% t(counts.final)
 K.Q.sorted <- K.Q[order(Y), order(Y)]
 #heatmap(K.Q.sorted, Colv="Rowv", Rowv=NA, symm=TRUE, col=magma(256))
+eigen.K.Q <- eigen(K.Q)
+plot(x = eigen.K.Q$vectors[,1] * sqrt(eigen.K.Q$values[1]),
+     y = eigen.K.Q$vectors[,2] * sqrt(eigen.K.Q$values[2]),
+     col = sample.col, pch=19)
 
 K.Z <- ec.final %*% t(ec.final)
 K.Z.sorted <- K.Z[order(Y), order(Y)]
 # heatmap(K.Z.sorted, Colv="Rowv", Rowv=NA, symm=TRUE, col=magma(256))
+eigen.K.Z <- eigen(K.Z)
+plot(x = eigen.K.Z$vectors[,1] * sqrt(eigen.K.Z$values[1]),
+     y = eigen.K.Z$vectors[,2] * sqrt(eigen.K.Z$values[2]),
+     col = sample.col, pch=19)
