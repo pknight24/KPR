@@ -6,6 +6,7 @@ KPR.Rproj
 *.so
 *.dll
 *~
+*.tiff
 inst/doc
 Meta
 doc
