@@ -7,7 +7,6 @@ KPR.Rproj
 *.dll
 *~
 *.tiff
-poster/formulas.html
 inst/doc
 Meta
 doc
