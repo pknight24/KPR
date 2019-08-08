@@ -6,51 +6,24 @@ output:
 # Poster Formulas
 
 Multiple regression
-$$\mathbf{Y} = \mathbf{X}\beta + \varepsilon$$
+$$\Huge\mathbf{Y} = \mathbf{X}\beta + \varepsilon$$
 
 Ordinany least squares
-$$\hat{\beta}_{OLS} =\mathop{\mathrm{arg\,min}}_{\beta}
+$$\Huge\hat{\beta}_{OLS} =\mathop{\mathrm{arg\,min}}_{\beta}
   \left\{\Vert \mathbf{Y} - \mathbf{X}\beta
     \Vert^2_{2}\right\}$$
 
 Ridge
-$$\hat{\beta}_{Ridge} =\mathop{\mathrm{arg\,min}}_{\beta}
+$$\Huge\hat{\beta}_{Ridge} =\mathop{\mathrm{arg\,min}}_{\beta}
   \left\{\Vert \mathbf{Y} - \mathbf{X}\beta
     \Vert^2_{2} + \lambda\Vert \beta \Vert^2_2\right\}$$
 
 KPR model
-$$\mathbf{Y} = \mathbf{Z}\beta + \mathbf{E}\eta + \varepsilon$$
+$$\Huge\mathbf{Y} = \mathbf{Z}\beta + \mathbf{E}\eta + \varepsilon$$
 KPR fit
 
-$$\hat{\beta}_{KPR}, \hat{\eta} = \mathop{\mathrm{arg\,min}}_{\beta, \eta}
+$$\Huge\hat{\beta}, \hat{\eta} = \mathop{\mathrm{arg\,min}}_{\beta, \eta}
   \left\{\Vert \mathbf{Y} - \mathbf{Z}\beta - \mathbf{E}\eta
     \Vert^2_{H} + \lambda\Vert \beta \Vert^2_{Q^{-1}}\right\}$$
     
     
-Usage
-```{r}
-library(KPR)
-data(yatsunenko)
-
-age <- yatsunenko$age
-counts <- yatsunenko$raw.counts
-patristic <- yatsunenko$patristic
-geo <- yatsunenko$geography
-unifrac <- yatsunenko$unifrac
-
-Q <- generateSimilarityKernel(patristic)
-
-counts.clr <- log(counts + 1) - apply(log(counts + 1), 1, mean)
-Z <- apply(counts.clr, 2, function(x) x - mean(x)) # column center the centered log ratio counts
-Y <- age - mean(age)
-E <- model.matrix(~ geo)[,-1]
-H <- generateSimilarityKernel(unifrac)
-
-
-
-
-
-library(KPR)
-kpr.out <- KPR(designMatrix = Z, covariates = E, Y = Y, Q = Q, H = H)
-
-```
