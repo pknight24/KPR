@@ -90,6 +90,8 @@ biplot.KPR <- function(x, ...)
   S = sort(S, decreasing = TRUE)
 
   eta = U%*%diag(S)
+  total.variation <- sum(S)
+  percent.variation <- (S / total.variation) * 100
 
 
   max.xlab = max(abs(eta[,1]))
@@ -104,7 +106,8 @@ biplot.KPR <- function(x, ...)
   sample.pch <- 19
 
   plot(eta[,1], eta[,2],
-    xlab = paste0('PC',k1), ylab = paste0('PC',k2),
+    xlab = paste0('GMD Component ',k1, " (",round(percent.variation[1], digits = 2),"% explained)"),
+    ylab = paste0("GMD Component ",k2, " (",round(percent.variation[2], digits = 2),"% explained)"),
     pch = sample.pch,
     xlim = c(-1.1*max.xlab, 1.1*max.xlab ), ylim =  c(-1.1*max.ylab, 1.1*max.ylab) ,
     col = sample.col)
