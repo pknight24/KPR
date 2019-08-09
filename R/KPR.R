@@ -28,6 +28,7 @@
 #' \item{cv.errors}{The error matrix generated in the cross-validation procedure.}
 #' \item{REML}{Was REML used to find \code{lambda}?}
 #' \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
+#' \item{bound}{The stochastic bound used to compute each p-value.}
 #' @importFrom stats sd pnorm
 #' @importFrom Rcpp sourceCpp
 #' @importFrom nlme lme pdIdent VarCorr
@@ -40,7 +41,7 @@
 #' @useDynLib KPR, .registration = TRUE
 #' @export
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
-                REML = TRUE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed, scale = FALSE,
+                REML = TRUE, n.lambda = 200, lambda, K = 5, useCpp = TRUE, seed, scale = TRUE,
                 inference = TRUE, ...)
 {
   if (scale)
@@ -49,7 +50,7 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
     Q <- (1/eigen.Q$values[1]) * Q # standardize Q
 
     XU <- designMatrix %*% eigen.Q$vectors
-    XU.std <- apply(XU, 2, function(x) x / sqrt(as.vector(t(x) %*% H %*% x) ))
+    XU.std <- apply(XU, 2, function(x) sqrt(length(x)) * x / sqrt(as.vector(t(x) %*% H %*% x) ))
 
     Z <- XU.std %*% t(eigen.Q$vectors)
     colnames(Z) <- colnames(designMatrix)
@@ -58,7 +59,6 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
 
 
   cov.missing <- missing(covariates)
-  Z <-  designMatrix # penalized matrix
   n <- nrow(Z)
   p <- ncol(Z) # number of penalized variables
   if (cov.missing) E <- matrix(0, n) # arbitrarily set E to a zero vector if no covariates are given
@@ -146,8 +146,15 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
               lambda.1se.index = lambda.1se.index,
               cv.errors = errors,
               REML = REML)
-  if (inference) output$p.values <- GMD.inference(output, ...)
-  else output$p.values  <- NULL
+  if (inference) {
+    infer.out <- GMD.inference(output,...)
+    output$p.values <- infer.out$p.values
+    output$bound <- infer.out$bound
+  }
+  else {
+     output$p.values  <- NULL
+     output$bound <- NULL
+  }
   class(output) <- "KPR"
 
   return(output)

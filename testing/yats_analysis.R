@@ -141,28 +141,8 @@ permuted <- permute::shuffle(length(Y))
 Y.perm <- Y[permuted]
 
 # model fitting and inference
-kpr.out <- KPR(designMatrix = X, covariates = E, Y = Y, H=H.unifrac)
+kpr.out <- KPR(designMatrix = X, Y = age, Q = Q, scale = TRUE)
 
-infer.out <- inference(kpr.out, method = "GMD")[,1]
-
-hdi.out <- inference(kpr.out, method = "hdi")[,1]
-
-grace.out <- inference(kpr.out, method = "Grace")[,1]
-
-par(mfrow = c(2, 2))
-hist(grace.out, main = "Grace pvalues")
-hist(infer.out, main = "GMD pvalues")
-
-plot(grace.out)
-plot(infer.out)
-
-results <- data.frame(gmd.pvals = infer.out,
-                      hdi.pvals = hdi.out,
-                      grace.pvals = grace.out,
-                      estimates = kpr.out$beta.hat,
-                      genus = colnames(X))
-
-par(mfrow = c(1,1))
 
 
 yatsunenko <- list(raw.counts = Xraw,

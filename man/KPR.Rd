@@ -6,7 +6,7 @@
 \usage{
 KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
   Q = diag(ncol(designMatrix)), REML = TRUE, n.lambda = 200, lambda,
-  K = 5, useCpp = TRUE, seed, scale = FALSE, inference = TRUE, ...)
+  K = 5, useCpp = TRUE, seed, scale = TRUE, inference = TRUE, ...)
 }
 \arguments{
 \item{designMatrix}{An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.}
@@ -49,6 +49,7 @@ to \code{lambda.min} from the \code{betahat} matrix.}
 \item{cv.errors}{The error matrix generated in the cross-validation procedure.}
 \item{REML}{Was REML used to find \code{lambda}?}
 \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
+\item{bound}{The stochastic bound used to compute each p-value.}
 }
 \description{
 Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.
