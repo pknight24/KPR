@@ -3,6 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(phyloseq)
 library(viridis)
+library(igraph)
 rm(list = ls())
 
 ### Load data
@@ -121,6 +122,17 @@ pruned <- prune_taxa(results.df$Genus, subset110_genus)
 
 tiff("~/KPR/poster/figures/phylo_tree.tiff", width=1600, height=1600, res=300, compression = "none")
 print(plot_tree(pruned, color="Class", nodelabf=nodeplotblank))
+dev.off()
+
+### Graph generation
+set.seed(42)
+g <- erdos.renyi.game(75, 0.02, type = "gnp") %>%
+  (function(x) delete.vertices(x, degree(x) == 0))
+com <- walktrap.community(g)
+
+tiff("~/KPR/poster/figures/graph.tiff", width=1600, height=1600, res=300, compression = "none")
+plot(g, edge.arrow.size = 0, vertex.label = NA,
+     vertex.color=membership(com), vertex.size = 10)
 dev.off()
 
 ### Multi-omic integration
