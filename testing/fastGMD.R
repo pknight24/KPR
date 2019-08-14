@@ -10,7 +10,7 @@ fastGMD <- function(X, H, Q)
   U.star <- solve(L.H) %*% svd.X$u
   V.star <- solve(L.Q) %*% svd.X$v
   d.star <- svd.X$d
-  return(list(U = U.star, V = V.star, D = d.star))
+  return(list(U = U.star, V = V.star, S = d.star))
 }
 
 library(KPR)
