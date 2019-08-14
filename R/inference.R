@@ -1,4 +1,4 @@
-GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE)
+GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, fastGMD = TRUE)
 {
   Z <- KPR.output$Z
   E <- KPR.output$E # for now, we will ignore the E matrix
@@ -20,11 +20,12 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE)
   Y.p <- P %*% Y
   Z.p <- P %*% Z
 
-  gmd.out <- GMD(X = Z.p, H = H, Q = Q, K = sum(svd(Z.p)$d > 10^-10))
+  gmd.out <- GMD(X = Z.p, H = H, Q = Q, K = sum(svd(Z.p)$d > 10^-10), fastGMD = fastGMD)
 
   U <- gmd.out$U
   V <- gmd.out$V
   S <- gmd.out$S
+
 
   W.long <- sapply(lambda, function(lam){ # each column corresponds to a value of lambda, each row corresponds to a diagonal value in the W matrix
     sapply(S, function(s) s^2 / (s^2 + lam)^2)

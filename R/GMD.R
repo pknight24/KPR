@@ -6,11 +6,19 @@
 #' @param H An n x n sample-wise similarity kernel.
 #' @param Q A p x p variable-wise similarity kernel.
 #' @param K The number of GMD components to include in the decomposition.
+#' @param fastGMD Logical, indicates whether to use the fastGMD implementation. This requires that H and Q are both positive definite.
 #' @return A list of matrices involved in the decomposition.
 #' @references Wang et al. Technical report.
 #' @export
-GMD <- function(X, H, Q, K)
+GMD <- function(X, H, Q, K, fastGMD = TRUE)
 {
+  if (fastGMD)
+  { fgmd <- fastGMD(X, H, Q, K)
+    U <- fgmd$U
+    S <- fgmd$S
+    V <- fgmd$V
+    return(list(U = U, S = S, V = V))
+  }
   n = dim(X)[1]
   p = dim(X)[2]
   # output matrix/vec
@@ -66,3 +74,19 @@ get_uv = function(X, H, Q, u_0, v_0){
 
 }
 
+fastGMD <- function(X, H, Q, K)
+{
+  eigen.Q <- eigen(Q)
+  L.Q <- eigen.Q$vectors %*% diag(sqrt(eigen.Q$values))
+  eigen.H <- eigen(H)
+  L.H <- eigen.H$vectors %*% diag(sqrt(eigen.H$values))
+
+  X.tilde <- t(L.H) %*% X %*% L.Q
+  svd.X <- svd(X.tilde)
+  # U.star <- diag(eigen.H$values^(-1)) %*% t(eigen.H$vectors) %*% svd.X$u[,1:K]
+  # V.star <- diag(eigen.Q$values^(-1)) %*% t(eigen.Q$vectors) %*% svd.X$v[,1:K]
+  U.star <- solve(L.H) %*% svd.X$u[,1:K]
+  V.star <- solve(t(L.Q)) %*% svd.X$v[,1:K]
+  d.star <- svd.X$d[1:K]
+  return(list(U = U.star, V = V.star, S = d.star))
+}

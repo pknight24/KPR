@@ -4,7 +4,7 @@
 \alias{GMD}
 \title{Generalized Matrix Decomposition}
 \usage{
-GMD(X, H, Q, K)
+GMD(X, H, Q, K, fastGMD = TRUE)
 }
 \arguments{
 \item{X}{An n x p data matrix.}
@@ -14,6 +14,8 @@ GMD(X, H, Q, K)
 \item{Q}{A p x p variable-wise similarity kernel.}
 
 \item{K}{The number of GMD components to include in the decomposition.}
+
+\item{fastGMD}{Logical, indicates whether to use the fastGMD implementation. This requires that H and Q are both positive definite.}
 }
 \value{
 A list of matrices involved in the decomposition.

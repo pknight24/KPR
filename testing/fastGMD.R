@@ -1,20 +1,4 @@
-fastGMD <- function(X, H, Q)
-{
-  eigen.Q <- eigen(Q)
-  L.Q <- eigen.Q$vectors %*% diag(sqrt(eigen.Q$values))
-  eigen.H <- eigen(H)
-  L.H <- eigen.H$vectors %*% diag(sqrt(eigen.H$values))
-
-  X.tilde <- t(L.H) %*% X %*% L.Q
-  svd.X <- svd(X.tilde)
-  U.star <- solve(L.H) %*% svd.X$u
-  V.star <- solve(L.Q) %*% svd.X$v
-  d.star <- svd.X$d
-  return(list(U = U.star, V = V.star, S = d.star))
-}
-
-library(KPR)
-
+devtools::load_all(".")
 data("yatsunenko")
 
 counts <- yatsunenko$raw.counts
@@ -34,5 +18,5 @@ Z <- apply(counts.clr, 2, function(x) x - mean(x))
 Y <- log(age) - mean(log(age)) # centered log age
 
 Q <- generateSimilarityKernel(patristic)
-gmd <- GMD(X = Z, H = diag(n), Q = Q, K = length(svd(Z)$d))
-fgmd <- fastGMD(Z, diag(n), Q)
+gmd <- GMD(X = Z, H = diag(n), Q = Q, K = length(svd(Z)$d), fastGMD = FALSE)
+fgmd <- GMD(X = Z, H = diag(n), Q = Q, K = length(svd(Z)$d), fastGMD = TRUE)

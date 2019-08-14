@@ -1,4 +1,4 @@
-library(KPR)
+devtools::load_all(".")
 library(dplyr)
 rm(list = ls())
 
@@ -28,12 +28,17 @@ Q <- (1 - alpha) * generateSimilarityKernel(patristic) + alpha * diag(p)
 # K.ec <- solve(ec %*% t(ec)) %>%
 #   (function(x) x / svd(x)$d[1])
 
-model.fit <- KPR(designMatrix = Z, Y = Y, Q = Q)
+model.fit.fast <- KPR(designMatrix = Z, Y = Y, Q = Q, fastGMD = TRUE)
+model.fit.slow <- KPR(designMatrix = Z, Y = Y, Q = Q, fastGMD = FALSE)
 
-
-plot(model.fit$beta.hat, col = ifelse(model.fit$p.values < 0.05,
+plot(model.fit.fast$beta.hat, col = ifelse(model.fit.fast$p.values < 0.05,
                                         "blue", "grey"),
      ylab="Effect size", main = "", xlab = "",
      pch = 19)
 abline(a = 0, b = 0, col = "red")
 
+plot(model.fit.slow$beta.hat, col = ifelse(model.fit.slow$p.values < 0.05,
+                                        "green", "grey"),
+     ylab="Effect size", main = "", xlab = "",
+     pch = 19)
+abline(a = 0, b = 0, col = "red")
