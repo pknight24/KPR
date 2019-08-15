@@ -133,7 +133,7 @@ biplot.KPR <- function(x, ...)
   index  <- intersect(signif, big.norms)
 
   if (is.null(colnames(x$Z))) names = paste0("V", index)
-  else names <- colnames(x$Z)[S.order]
+  else names <- colnames(x$Z)[index]
   iter = 1
 
   max.xarrow = max(abs(arrow.x))

@@ -30,6 +30,7 @@ Q <- (1 - alpha) * generateSimilarityKernel(patristic) + alpha * diag(p)
 
 model.fit.fast <- KPR(designMatrix = Z, Y = Y, Q = Q, fastGMD = TRUE)
 model.fit.slow <- KPR(designMatrix = Z, Y = Y, Q = Q, fastGMD = FALSE)
+model.fit.ridge <- KPR(designMatrix = Z, Y = Y, fastGMD = TRUE)
 
 plot(model.fit.fast$beta.hat, col = ifelse(model.fit.fast$p.values < 0.05,
                                         "blue", "grey"),
