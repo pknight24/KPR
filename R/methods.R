@@ -80,14 +80,15 @@ biplot.KPR <- function(x, ...)
   S <- gmd.out$S
   V <- gmd.out$V
 
+  S.order <- order(S, decreasing = TRUE)
 
-  U = U[,order(S, decreasing = TRUE)]
-  V = V[,order(S, decreasing = TRUE)]
+  U = U[,S.order]
+  V = V[,S.order]
 
-  k1 = order(S, decreasing = TRUE)[1]
-  k2 = order(S, decreasing = TRUE)[2]
+  k1 = S.order[1]
+  k2 = S.order[2]
 
-  S = sort(S, decreasing = TRUE)
+  S = S[S.order]
 
   eta = U%*%diag(S)
   total.variation <- sum(S)
@@ -132,7 +133,7 @@ biplot.KPR <- function(x, ...)
   index  <- intersect(signif, big.norms)
 
   if (is.null(colnames(x$Z))) names = paste0("V", index)
-  else names <- colnames(x$Z)
+  else names <- colnames(x$Z)[S.order]
   iter = 1
 
   max.xarrow = max(abs(arrow.x))
