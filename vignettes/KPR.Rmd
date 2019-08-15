@@ -115,7 +115,7 @@ country of origin.
 ```{r}
 counts.clr <- log(counts + 1) - apply(log(counts + 1), 1, mean)
 Z <- apply(counts.clr, 2, function(x) x - mean(x)) # column center the centered log ratio counts
-Y <- age - mean(age)
+Y <- log(age) - mean(log(age))
 E <- model.matrix(~ geo)[,-1]
 ```
 
