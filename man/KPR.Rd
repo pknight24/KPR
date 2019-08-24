@@ -5,8 +5,8 @@
 \title{Kernel Penalized Regression}
 \usage{
 KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
-  Q = diag(ncol(designMatrix)), REML = TRUE, n.lambda = 200, lambda,
-  K = 5, useCpp = TRUE, seed, scale = TRUE, inference = TRUE, ...)
+  Q = diag(ncol(designMatrix)), lambda, seed, scale = TRUE,
+  inference = TRUE, ...)
 }
 \arguments{
 \item{designMatrix}{An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.}
@@ -19,15 +19,7 @@ KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
 
 \item{Q}{A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.}
 
-\item{REML}{logical, indicates whether to use REML to find the optimal value of \code{lambda}. If a value of \code{lambda} is given, this is ignored.}
-
-\item{n.lambda}{The number of lambda values to test through the cross validation search. The values are generated internally.}
-
 \item{lambda}{A vector of lambda values to test through cross validation. This will override the sequence generated with the \code{n.lambda} parameter.}
-
-\item{K}{The number of folds in the cross validation search.}
-
-\item{useCpp}{Indicate whether to use the C++ backend for cross-validation. This is ignored if `REML` is set to TRUE.}
 
 \item{seed}{Set a seed for random number generation.}
 
@@ -41,13 +33,6 @@ KPR(designMatrix, covariates, Y, H = diag(nrow(designMatrix)),
 \item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
 \item{eta.hat}{A matrix of estimated coefficients for the unpenalized variables, where each column corresponds to a different value of lambda.}
 \item{lambda}{The vector of lambda values used in cross validation.}
-\item{lambda.min}{The value of lambda that results in the minimum sum of squared errors.}
-\item{lambda.min.index}{The index of \code{lambda.min} in the \code{lambda} vector. This can be used to retrieve the estimated coefficients corresponding
-to \code{lambda.min} from the \code{betahat} matrix.}
-\item{lambda.1se}{The largest value of lambda within one standard error of \code{lambda.min}.}
-\item{lambda.1se.index}{The index of the \code{lambda.1se} value in the \code{lambda} vector.}
-\item{cv.errors}{The error matrix generated in the cross-validation procedure.}
-\item{REML}{Was REML used to find \code{lambda}?}
 \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
 \item{bound}{The stochastic bound used to compute each p-value.}
 }
