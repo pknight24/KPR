@@ -18,7 +18,7 @@
 #' \item{lambda}{The vector of lambda values used in cross validation.}
 #' \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
 #' \item{bound}{The stochastic bound used to compute each p-value.}
-#' @importFrom stats sd pnorm
+#' @importFrom stats sd pnorm optimize
 #' @importFrom Rcpp sourceCpp
 #' @importFrom nlme lme pdIdent VarCorr
 #' @importFrom natural olasso_cv
@@ -100,84 +100,3 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
 }
 
 
-
-
-computeErrorMatrixR <- function(Zrand,Erand,Yrand,Hrand,Q,lambda,K,cov.missing)
-{
-
-  n <- nrow(Zrand)
-  p <- ncol(Zrand)
-
-  n.lambda <- length(lambda)
-  errors <- matrix(nrow = K, ncol = n.lambda)
-
-  for(j in 1:n.lambda){
-    for(k in 1:K){
-      testIdx <- ((n / K * (k - 1) + 1):(n / K * k))
-      trainIdx <- sort(setdiff(1:n, testIdx), decreasing=TRUE)
-      Ytrain <- Yrand[trainIdx]
-      Ytest <- Yrand[testIdx]
-      Ztrain <- Zrand[trainIdx, ]
-      Ztest <- Zrand[testIdx, ]
-      Etrain <- Erand[trainIdx, ]
-      Etest <- Erand[testIdx, ]
-      Htrain <- Hrand[trainIdx, trainIdx]
-      Htest <- Hrand[  testIdx,  testIdx]
-
-      n.train <- nrow(Ztrain)
-
-      if (cov.missing) P <- diag(n.train)
-      else P <- diag(n.train) - (Etrain %*% solve( t(Etrain) %*% Htrain %*% Etrain ) %*% t(Etrain) %*% Htrain)
-      Y.p <- P %*% Ytrain
-      Z.p <- P %*% Ztrain
-
-      beta.hat <- Q %*% solve( t(Z.p) %*% Htrain %*% Z.p %*% Q + lambda[j] * diag(p) ) %*% t(Z.p) %*% Htrain %*% Y.p # penalized coefficients
-      if (cov.missing) eta.hat <- 0
-      else eta.hat <- solve(t(Etrain) %*% Htrain %*% Etrain) %*% t(Etrain) %*% Htrain %*% (Ytrain - Ztrain %*% beta.hat) # unpenalized coefficients
-
-      coefficients <- c(beta.hat, eta.hat)
-      if(length(testIdx) == 1)
-      {
-        Ztest <- t(matrix(Ztest))
-        Etest <- t(matrix(Etest))
-      }
-      Xtest <- cbind(Ztest, Etest)
-
-      yhat <- Xtest %*% coefficients
-      errors[k, j] <- t(Ytest - yhat) %*% Htest %*%  (Ytest - yhat)
-    }
-  }
-
-  return(errors)
-
-}
-
-remlEstimation <- function(Z, E, Y, H, Q, cov.missing)
-{
-
-  n <- nrow(Z)
-  p <- ncol(Z)
-
-  if (cov.missing) P <- diag(n)
-  else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
-  Y.p <- P %*% Y
-  Z.p <- P %*% Z # apply P to the variables that should be penalized
-
-  eigen.Q <- eigen(Q)
-  L.Q <- eigen.Q$vectors %*% diag(sqrt(eigen.Q$values))
-  eigen.H <- eigen(H)
-  L.H <- eigen.H$vectors %*% diag(sqrt(eigen.H$values))
-  Z.tilde <- t(L.H) %*% Z.p %*% L.Q
-  Y.tilde <- t(L.H) %*% Y.p
-
-  u <- svd(Z.tilde)$u
-  s <- svd(Z.tilde)$d
-
-  dummyID <- factor(rep(1, n))
-  lmm.fit <- lme(Y.tilde~1, random=list(dummyID = pdIdent(~-1 + u %*% diag(s))))
-
-  lambda.reml <- lmm.fit$sigma^2 / as.numeric(VarCorr(lmm.fit)[1,1])
-
-  return(lambda.reml)
-
-}

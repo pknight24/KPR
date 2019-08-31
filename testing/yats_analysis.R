@@ -23,10 +23,10 @@ E <- model.matrix(~ geo)[,-1]
 
 alpha <- 0.01
 
+Q <- generateSimilarityKernel(patristic)
 Q <- (1 - alpha) * generateSimilarityKernel(patristic) + alpha * diag(p)
 
-# K.ec <- solve(ec %*% t(ec)) %>%
-#   (function(x) x / svd(x)$d[1])
+optim.test <- computeLambda(Z, E, Y, H = diag(n), Q = Q, cov.missing = TRUE)
 
 model.fit.fast <- KPR(designMatrix = Z, Y = Y, Q = Q, fastGMD = TRUE)
 model.fit.slow <- KPR(designMatrix = Z, Y = Y, Q = Q, fastGMD = FALSE)
