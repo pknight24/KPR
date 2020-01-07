@@ -1,0 +1,70 @@
+---
+title: 'KPR: Stability Testing'
+author: "Parker Knight"
+date: "1/4/2020"
+output: pdf_document
+---
+
+The purpose of this experiment is to study the relative change in KPR coefficients after making permutations to the Q, H, and Z matrices. 
+
+The file "helpers.R" loads the yatsunenko data set, and includes helper functions for comparing models.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(dev = 'pdf')
+```
+
+```{r, echo=TRUE}
+source("helpers.R")
+```
+# Q
+
+## Eigenvalue Permutations
+
+```{r, fig.height=8}
+Q <- generateSimilarityKernel(patristic)
+Q.1 <- permuteEigenvalue(Q, 1)
+Q.2 <- permuteEigenvalue(Q, 75)
+Q.3 <- permuteEigenvalue(Q, 149)
+
+fit <- KPR(designMatrix = Z, Y = Y, Q = Q)
+fit.1 <- KPR(designMatrix = Z, Y = Y, Q = Q.1)
+fit.2 <- KPR(designMatrix = Z, Y = Y, Q = Q.2)
+fit.3 <- KPR(designMatrix = Z, Y = Y, Q = Q.3)
+
+compareModels(fit, fit.1, main = "Eigenvalue 1")
+compareModels(fit, fit.2, main = "Eigenvalue 75")
+compareModels(fit, fit.3, main = "Eigenvalue 149")
+```
+
+# H
+
+## Eigenvalue Permutations
+
+```{r, fig.height=8}
+H <- generateSimilarityKernel(unifrac)
+H.1 <- permuteEigenvalue(H, 1)
+H.2 <- permuteEigenvalue(H, 50)
+H.3 <- permuteEigenvalue(H, 100)
+
+fit <- KPR(designMatrix = Z, Y = Y, H = H)
+fit.1 <- KPR(designMatrix = Z, Y = Y, H = H.1)
+fit.2 <- KPR(designMatrix = Z, Y = Y, H = H.2)
+fit.3 <- KPR(designMatrix = Z, Y = Y, H = H.3)
+
+compareModels(fit, fit.1, main = "Eigenvalue 1")
+compareModels(fit, fit.2, main = "Eigenvalue 50")
+compareModels(fit, fit.3, main = "Eigenvalue 100")
+```
+
+
+# Z
+
+## Gaussian Noise
+
+```{r, fig.height=8}
+Z.1 <- Z + rnorm(n = length(Z))
+fit <- KPR(designMatrix = Z, Y = Y)
+fit.1 <- KPR(designMatrix = Z.1, Y = Y)
+
+compareModels(fit, fit.1, main = "Gaussian noise")
+```

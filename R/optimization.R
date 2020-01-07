@@ -38,18 +38,21 @@ buildFunctionToOptimize <- function(Z, E, Y, H, Q, cov.missing)
   else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
   Y.p <- P %*% Y
   Z.p <- P %*% Z # apply P to the variables that should be penalized
+  
+  H.inv <- solve(H)
 
   return(function(par)
   {
-      sigma <- Z.p %*% solve(par[1] * Q + par[2] * diag(p))  %*% t(Z.p) + solve(H)
+      sigma <- Z.p %*% solve(par[1] * Q + par[2] * diag(p))  %*% t(Z.p) + H.inv
 
-      n * log(t(Y.p) %*% solve(sigma) %*% Y.p / n) + n * log(det(sigma))
+      log(t(Y.p) %*% solve(sigma) %*% Y.p / n) + log(det(sigma))
   })
 }
+
 
 #' @export
 computeLambda <- function(Z, E, Y, H, Q, cov.missing)
 {
     f <- buildFunctionToOptimize(Z, E, Y, H, Q, cov.missing)
-    optim(par = c(1,1), fn = f,  lower = 0.000001, method = "L-BFGS-B")
+    optim(par = c(1,1,1), fn = f,  method = "BFGS")
 }
