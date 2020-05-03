@@ -41,7 +41,8 @@ compareModels(fit, fit.3, main = "Eigenvalue 149")
 ## Eigenvalue Permutations
 
 ```{r, fig.height=8}
-H <- generateSimilarityKernel(unifrac)
+# H <- generateSimilarityKernel(unifrac)
+H <- solve(ec %*% t(ec))
 H.1 <- permuteEigenvalue(H, 1)
 H.2 <- permuteEigenvalue(H, 50)
 H.3 <- permuteEigenvalue(H, 100)
@@ -55,6 +56,10 @@ compareModels(fit, fit.1, main = "Eigenvalue 1")
 compareModels(fit, fit.2, main = "Eigenvalue 50")
 compareModels(fit, fit.3, main = "Eigenvalue 100")
 ```
+
+
+Note: when I generate $H$ from the EC data, perturbing later eigenvalues actually improves performance. Then when I plugged in $H^{-1}$, I saw the same behavior as with the UniFrac $H$ kernel. This seems to lend more confusion to the $H$ vs $H^{-1}$ debate.
+
 
 
 # Z
