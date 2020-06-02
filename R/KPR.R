@@ -18,6 +18,7 @@
 #' \item{lambda}{The vector of lambda values used in cross validation.}
 #' \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
 #' \item{bound}{The stochastic bound used to compute each p-value.}
+#' \item{sigmaepsi.hat}{Variance component estimate used in the GMD inference.}
 #' @importFrom stats sd pnorm optimize
 #' @importFrom Rcpp sourceCpp
 #' @importFrom nlme lme pdIdent VarCorr
@@ -88,10 +89,12 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
     infer.out <- GMD.inference(output,...)
     output$p.values <- infer.out$p.values
     output$bound <- infer.out$bound
+    output$sigmaepsi.hat <- infer.out$sigmaepsi.hat
   }
   else {
      output$p.values  <- NULL
      output$bound <- NULL
+     output$sigmaepsi.hat <- NULL
   }
   class(output) <- "KPR"
 

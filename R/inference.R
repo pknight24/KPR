@@ -100,5 +100,6 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
   if (length(lambda) == 2) colnames(p.mat) <- c("lambda.min", "lambda.1se")
 
   return(list(p.values = p.mat,
-              bound = bound.hat.long))
+              bound = bound.hat.long,
+              sigmaepsi.hat = sigmaepsi.hat))
 }
