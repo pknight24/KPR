@@ -11,7 +11,6 @@ KPR(
   H = diag(nrow(designMatrix)),
   Q = diag(ncol(designMatrix)),
   lambda,
-  seed,
   scale = TRUE,
   inference = TRUE,
   ...
@@ -29,8 +28,6 @@ KPR(
 \item{Q}{A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.}
 
 \item{lambda}{A vector of lambda values to test through cross validation. This will override the sequence generated with the \code{n.lambda} parameter.}
-
-\item{seed}{Set a seed for random number generation.}
 
 \item{scale}{Logical, indicates whether to scale \code{Q} and the design matrix.}
 

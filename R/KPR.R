@@ -8,7 +8,6 @@
 #' @param H An n x n sample similarity kernel. Must be symmetric and positive semidefinite. This defaults to an identity matrix.
 #' @param Q A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.
 #' @param lambda A vector of lambda values to test through cross validation. This will override the sequence generated with the \code{n.lambda} parameter.
-#' @param seed Set a seed for random number generation.
 #' @param scale Logical, indicates whether to scale \code{Q} and the design matrix.
 #' @param inference Logical, indicates whether to compute p-values for penalized regression coefficients with the GMD inference.
 #' @param ... Additional parameters passed to the GMD inference
@@ -31,7 +30,7 @@
 #' @useDynLib KPR, .registration = TRUE
 #' @export
 KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
-                lambda, seed, scale = TRUE,
+                lambda, scale = TRUE,
                 inference = TRUE, ...)
 {
   if (scale)
