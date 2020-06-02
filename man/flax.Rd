@@ -4,7 +4,9 @@
 \name{flax}
 \alias{flax}
 \title{Flaxseed lignan extract intervention microbiome data}
-\format{A list of the four matrices descibed above.}
+\format{
+A list of the four matrices descibed above.
+}
 \usage{
 data(flax)
 }

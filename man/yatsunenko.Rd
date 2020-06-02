@@ -4,7 +4,8 @@
 \name{yatsunenko}
 \alias{yatsunenko}
 \title{Age-related microbiome data}
-\format{A list with the following entries:
+\format{
+A list with the following entries:
 \describe{
   \item{\code{raw.counts}}{The raw abundance counts for each sample, across 149 genera.}
   \item{\code{age}}{The age (in years) of each subject.}
@@ -12,7 +13,8 @@
   \item{\code{unifrac}}{Unweighted UniFrac distances bewteen each of the 100 samples.}
   \item{\code{ec}}{1378 Enzyme commission (ec) summaries of bacterial genome data for each sample; see the paper cited below for reference.}
   \item{\code{geography}}{Country of origin for each sample.}
-}}
+}
+}
 \usage{
 data(yatsunenko)
 }
