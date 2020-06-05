@@ -5,15 +5,11 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
   Y <- KPR.output$Y
   H <- KPR.output$H
   Q <- KPR.output$Q
-  if (length(KPR.output$lambda) == 1) lambda <- KPR.output$lambda
-  else lambda  <- c(KPR.output$lambda.min, KPR.output$lambda.1se)
+  lambda <- KPR.output$lambda
   n <- dim(Z)[1]
   p <- dim(Z)[2]
-  if (length(KPR.output$lambda) == 1) beta.hat.uncorrected <- KPR.output$beta.hat # before correction
-  else beta.hat.uncorrected <- KPR.output$beta.hat[,
-                                                   c(KPR.output$lambda.min.index,
-                                                     KPR.output$lambda.1se.index)]
-
+  beta.hat.uncorrected <- KPR.output$beta.hat # before correction
+  
 
   if (is.null(E)) P <- diag(n)
   else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
@@ -26,11 +22,7 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
   V <- gmd.out$V
   S <- gmd.out$S
 
-
-  W.long <- sapply(lambda, function(lam){ # each column corresponds to a value of lambda, each row corresponds to a diagonal value in the W matrix
-    sapply(S, function(s) s^2 / (s^2 + lam)^2)
-  })
-
+  W.long <- sapply(S, function(s) s^2 / (s^2 + lambda)^2)
 
   # bias-correction
   eigen.H = eigen(H)
@@ -49,7 +41,7 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
 
   olasso.fit = natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)
   sigmaepsi.hat = olasso.fit$sig_obj
-
+  
   if(weight == TRUE)
   {
     lambda.opt = glmnet::cv.glmnet(Z.tilde, Y.tilde, alpha = 1, intercept = FALSE, standardize = TRUE, penalty.factor = 1/sqrt(values.Q))$lambda.min
@@ -63,43 +55,33 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
 
   beta.init = as.numeric(vectors.Q%*%beta.glasso)
 
-  Xi.long <- sapply(1:length(lambda), FUN=function(s){ # each column is a lambda value, each row is a Xi value
-    diag(Q%*%V%*%diag(W.long[,s])%*%t(V))
-  })
+  Xi.long <- diag(Q%*%V%*%diag(W.long)%*%t(V))
 
-  bias.hat <- sapply(1:length(lambda), FUN=function(s){
-    Q%*%V%*%diag(W.long[,s])%*%t(V)%*%beta.init - (1 - mu)*Xi.long[,s]*beta.init - mu*beta.init
-  })
+  bias.hat <- Q%*%V%*%diag(W.long)%*%t(V)%*%beta.init - (1 - mu)*Xi.long*beta.init - mu*beta.init
+
   beta.hat.cor <- beta.hat.uncorrected  - bias.hat
 
 
   # covariance
-  diag.cov.hat.long <- sapply(1:length(lambda),function(s){ # this finds the value of Sigma_jj * sigmaepsi_hat^2, used in the calculation of the p values
-    diag(sigmaepsi.hat^2*Q%*%V%*%diag(S^(-2)*W.long[,s]*W.long[,s])%*%t(V)%*%Q)
-  })
+  # this finds the value of Sigma_jj * sigmaepsi_hat^2, used in the calculation of the p values
+  diag.cov.hat.long <- diag(sigmaepsi.hat^2*Q%*%V%*%diag(S^(-2)*W.long*W.long)%*%t(V)%*%Q)
 
-  bound.hat.long <- sigmaepsi.hat * sapply(1:length(lambda), function(s){ # each column is a lambda value, each row j is the value of Psi_j (defined in Thm 3.1)
-    bound.mat <- (Q%*%V%*%diag(W.long[,s])%*%t(V) - (1- mu)*diag(Xi.long[,s]) - mu*diag(rep(1,p)))%*%L.Q
-    apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
-  })
+  bound.mat <- (Q%*%V%*%diag(W.long)%*%t(V) - (1- mu)*diag(Xi.long) - mu*diag(rep(1,p)))%*%L.Q
+  bound.hat.long <- sigmaepsi.hat * apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
 
   # p-values compuated as given in 3.6
-  p.mat <- sapply(1:length(lambda), function(s){
-    beta.temp = abs(beta.hat.cor[,s]) - bound.hat.long[,s]
+    beta.temp = abs(beta.hat.cor) - bound.hat.long
     p.vec = rep(0,p)
     for(i in 1:p){
 
-      if(beta.temp[i] > 0){p.vec[i] = 2*(1 - pnorm(beta.temp[i]/sqrt(diag.cov.hat.long[i,s])))}
+      if(beta.temp[i] > 0){p.vec[i] = 2*(1 - pnorm(beta.temp[i]/sqrt(diag.cov.hat.long[i])))}
       if(beta.temp[i] <= 0){p.vec[i] = 1}
 
     }
-    return(p.vec)
-  })
 
-  rownames(p.mat) <- colnames(Z)
-  if (length(lambda) == 2) colnames(p.mat) <- c("lambda.min", "lambda.1se")
+  names(p.vec) <- colnames(Z)
 
-  return(list(p.values = p.mat,
+  return(list(p.values = p.vec,
               bound = bound.hat.long,
               sigmaepsi.hat = sigmaepsi.hat))
 }

@@ -55,26 +55,21 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
 
   lambda <- remlEstimation(Z, E, Y, H, Q, cov.missing)
   
-  estimates <- sapply(lambda, FUN = function(s) {
-      if (cov.missing) P <- diag(n)
-      else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
-      Y.p <- P %*% Y
-      Z.p <- P %*% Z # apply P to the variables that should be penalized
-
-      beta.hat <- Q %*% solve( t(Z.p) %*% H %*% Z.p %*% Q + s * diag(p) ) %*% t(Z.p) %*% H %*% Y.p # penalized coefficients
-      if (cov.missing) eta.hat <- 0
-      else eta.hat <- solve(t(E) %*% H %*% E) %*% t(E) %*% H %*% (Y - Z %*% beta.hat)
-      c(beta.hat, eta.hat)
-  })
-  beta.hat <- as.matrix(estimates[1:p,])
-  eta.hat <- as.matrix(estimates[-(1:p),])
-
+  if (cov.missing) P <- diag(n)
+  else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
+  
+  Y.p <- P %*% Y
+  Z.p <- P %*% Z # apply P to the variables that should be penalized
+  
+  beta.hat <- Q %*% solve( t(Z.p) %*% H %*% Z.p %*% Q + lambda * diag(p) ) %*% t(Z.p) %*% H %*% Y.p # penalized coefficients
+  if (cov.missing) eta.hat <- 0
+  else eta.hat <- solve(t(E) %*% H %*% E) %*% t(E) %*% H %*% (Y - Z %*% beta.hat)
+      
   rownames(beta.hat) <- colnames(Z)
   rownames(eta.hat) <- colnames(E)
 
   if (cov.missing) eta.hat <- NULL
   if (cov.missing) E <- NULL
-
 
   output <- list(Z = Z,
               E = E,
