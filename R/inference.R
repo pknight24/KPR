@@ -25,22 +25,18 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
   W.long <- sapply(S, function(s) s^2 / (s^2 + lambda)^2)
 
   # bias-correction
-  eigen.H = eigen(H)
-  values.H = eigen.H$values
-  vectors.H = eigen.H$vectors
-  L.H = vectors.H%*%diag(sqrt(values.H))
-  eigen.Q = eigen(Q)
-  values.Q = eigen.Q$values
-  vectors.Q = eigen.Q$vectors
-  L.Q = vectors.Q%*%diag(sqrt(values.Q))
-
+  L.H <- t(chol(H))
+  L.Q <- t(chol(Q))
+  
   Z.tilde = t(L.H)%*%Z.p%*%vectors.Q
   Y.tilde = t(L.H)%*%Y.p
 
   # using natural lasso method
-
   olasso.fit = natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)
   sigmaepsi.hat = olasso.fit$sig_obj
+  for (i in 1:49) sigmaepsi.hat <- c(sigmaepsi.hat, 
+                                      natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)$sig_obj)
+  sigmaepsi.hat <- median(sigmaepsi.hat)
   
   if(weight == TRUE)
   {
