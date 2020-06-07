@@ -7,7 +7,7 @@
 #' @param Y An n x 1 response vector. Should be scaled and centered.
 #' @param H An n x n sample similarity kernel. Must be symmetric and positive semidefinite. This defaults to an identity matrix.
 #' @param Q A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.
-#' @param lambda A vector of lambda values to test through cross validation. This will override the sequence generated with the \code{n.lambda} parameter.
+#' @param lambda A fixed value of lambda to be used in fitting the KPR model. If this is missing, an appropriate value is chosen using REML estimation.
 #' @param scale Logical, indicates whether to scale \code{Q} and the design matrix.
 #' @param inference Logical, indicates whether to compute p-values for penalized regression coefficients with the GMD inference.
 #' @param ... Additional parameters passed to the GMD inference
@@ -53,7 +53,7 @@ KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = d
   if (cov.missing) E <- matrix(0, n) # arbitrarily set E to a zero vector if no covariates are given
   else E <- as.matrix(covariates)
 
-  lambda <- remlEstimation(Z, E, Y, H, Q, cov.missing)
+  if (missing(lambda)) lambda <- remlEstimation(Z, E, Y, H, Q, cov.missing)
   
   if (cov.missing) P <- diag(n)
   else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H

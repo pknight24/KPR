@@ -27,7 +27,7 @@ KPR(
 
 \item{Q}{A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.}
 
-\item{lambda}{A vector of lambda values to test through cross validation. This will override the sequence generated with the \code{n.lambda} parameter.}
+\item{lambda}{A fixed value of lambda to be used in fitting the KPR model. If this is missing, an appropriate value is chosen using REML estimation.}
 
 \item{scale}{Logical, indicates whether to scale \code{Q} and the design matrix.}
 
