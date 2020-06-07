@@ -27,6 +27,7 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
   # bias-correction
   L.H <- t(chol(H))
   L.Q <- t(chol(Q))
+  vectors.Q <- eigen(Q)$vectors
   
   Z.tilde = t(L.H)%*%Z.p%*%vectors.Q
   Y.tilde = t(L.H)%*%Y.p

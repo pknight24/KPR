@@ -12,6 +12,7 @@ KPR(
   Q = diag(ncol(designMatrix)),
   lambda,
   scale = TRUE,
+  linear_solve = TRUE,
   inference = TRUE,
   ...
 )
@@ -30,6 +31,8 @@ KPR(
 \item{lambda}{A fixed value of lambda to be used in fitting the KPR model. If this is missing, an appropriate value is chosen using REML estimation.}
 
 \item{scale}{Logical, indicates whether to scale \code{Q} and the design matrix.}
+
+\item{linear_solve}{Logical, indices whether to fit the KPR model by solving a system of linear equations. If set to FALSE, the model is fit by directly using the normal equations.}
 
 \item{inference}{Logical, indicates whether to compute p-values for penalized regression coefficients with the GMD inference.}
 
