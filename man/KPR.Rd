@@ -11,9 +11,9 @@ KPR(
   H = diag(nrow(designMatrix)),
   Q = diag(ncol(designMatrix)),
   lambda,
-  scale = TRUE,
-  linear_solve = TRUE,
-  inference = TRUE,
+  scale = FALSE,
+  inference = FALSE,
+  REML = FALSE,
   ...
 )
 }
@@ -32,16 +32,14 @@ KPR(
 
 \item{scale}{Logical, indicates whether to scale \code{Q} and the design matrix.}
 
-\item{linear_solve}{Logical, indices whether to fit the KPR model by solving a system of linear equations. If set to FALSE, the model is fit by directly using the normal equations.}
-
 \item{inference}{Logical, indicates whether to compute p-values for penalized regression coefficients with the GMD inference.}
 
 \item{...}{Additional parameters passed to the GMD inference}
 }
 \value{
-\item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
-\item{eta.hat}{A matrix of estimated coefficients for the unpenalized variables, where each column corresponds to a different value of lambda.}
-\item{lambda}{The vector of lambda values used in cross validation.}
+\item{beta.hat}{Estimated coefficients for the penalized variables.}
+\item{eta.hat}{Estimated coefficients for the unpenalized variables.}
+\item{theta.hat}{The vector of parameter values found with Maximum Likelihood.}
 \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
 \item{bound}{The stochastic bound used to compute each p-value.}
 \item{sigmaepsi.hat}{Variance component estimate used in the GMD inference.}

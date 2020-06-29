@@ -1,32 +1,3 @@
-#' @export
-print.KPR <- function(x, ...)
-{
-  cat("A fitted KPR model of the form\n\n")
-  cat("\t y = Zb + ")
-  if (!is.null(x$E)) cat("Eh + ")
-  cat("e\n\n")
-  q.trivial <- ifelse(all(x$Q == diag(ncol(x$Z))), "trivial","nontrivial" )
-  h.trivial <- ifelse(all(x$H == diag(nrow(x$Z))), "trivial","nontrivial" )
-  cat("with a", h.trivial, "H matrix and a", q.trivial, "Q matrix.\n\n")
-
-}
-
-#' @export
-summary.KPR <- function(object, ...)
-{
-  cat("Kernel Penalized Regression results, using the GMD inference.\n\n")
-
-
-  infer.out <- object$p.vals
-
-  b <- object$beta.hat
-  l <- c(round(object$lambda), rep("", length(b) - 1))
-  p <- infer.out
-  data.frame(lambda = l, betahat = b, pvalue = p)
-
-}
-
-
 #' A "supervised" GMD biplot
 #'
 #' This plots a GMD biplot of an object of class \code{KPR}. The axes correspond to first and second

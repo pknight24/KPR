@@ -49,6 +49,7 @@ KPR(designMatrix = X, Y = Y, H = H, Q = Q, inference = FALSE)$lambda
 beta.test <- KPR(designMatrix = X, Y = Y, H = H, Q = Q, inference = FALSE,
                  lambda = abs(optim.out$p2 / optim.out$p1))$beta.hat
 beta.kpr <- KPR(designMatrix = X, Y = Y, H = H, Q = Q, inference = FALSE)$beta.hat
+plot(beta.test, beta.kpr)
 
                                         # comparing to riPEER
 optimx(par=c(1,1), fn = fn_ripeer, method = "Nelder-Mead")
