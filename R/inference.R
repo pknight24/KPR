@@ -1,5 +1,30 @@
-GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
+#' Running the GMD inference on a KPR model
+#'
+#' @param KPR.output Output from running the \code{KPR} function.
+#' @param mu GMD inference parameter
+#' @param r GMD inference parameter
+#' @param weight Logical, indicates whether to include a penalty factor when computing the beta.glasso vector.
+#' @return An object of classes KPR with the following fields added:
+#' \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
+#' \item{bound}{The stochastic bound used to compute each p-value.}
+#' \item{sigmaepsi.hat}{Variance component estimate used in the GMD inference.}
+#' @export
+inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...) # this needs to be heavily debugged for adaptive penalties
 {
+
+  if (scale)
+  {
+    eigen.Q <- eigen(Q)
+    Q <- (1/eigen.Q$values[1]) * Q # standardize Q
+
+    XU <- designMatrix %*% eigen.Q$vectors
+    XU.std <- apply(XU, 2, function(x) sqrt(length(x)) * x / sqrt(as.vector(t(x) %*% H %*% x) ))
+
+    Z <- XU.std %*% t(eigen.Q$vectors)
+    colnames(Z) <- colnames(designMatrix)
+  }
+
+
   Z <- KPR.output$Z
   E <- KPR.output$E # for now, we will ignore the E matrix
   Y <- KPR.output$Y
@@ -9,7 +34,7 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
   n <- dim(Z)[1]
   p <- dim(Z)[2]
   beta.hat.uncorrected <- KPR.output$beta.hat # before correction
-  
+
 
   if (is.null(E)) P <- diag(n)
   else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
@@ -30,17 +55,17 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
   eigen.Q <- eigen(Q)
   vectors.Q <- eigen.Q$vectors
   values.Q <- eigen.Q$values
-  
+
   Z.tilde = t(L.H)%*%Z.p%*%vectors.Q
   Y.tilde = t(L.H)%*%Y.p
 
   # using natural lasso method
   olasso.fit = natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)
   sigmaepsi.hat = olasso.fit$sig_obj
-  for (i in 1:49) sigmaepsi.hat <- c(sigmaepsi.hat, 
+  for (i in 1:49) sigmaepsi.hat <- c(sigmaepsi.hat,
                                       natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)$sig_obj)
   sigmaepsi.hat <- median(sigmaepsi.hat)
-  
+
   if(weight == TRUE)
   {
     lambda.opt = glmnet::cv.glmnet(Z.tilde, Y.tilde, alpha = 1, intercept = FALSE, standardize = TRUE, penalty.factor = 1/sqrt(values.Q))$lambda.min
@@ -78,9 +103,11 @@ GMD.inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
 
     }
 
-  names(p.vec) <- colnames(Z)
+    names(p.vec) <- colnames(Z)
 
-  return(list(p.values = p.vec,
-              bound = bound.hat.long,
-              sigmaepsi.hat = sigmaepsi.hat))
+    KPR.output$p.values <- p.vec
+    KPR.output$bound <- bound.hat.long
+    KPR.output$sigmaepsi.hat <- sigmaepsi.hat
+
+    return(KPR.output)
 }

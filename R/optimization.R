@@ -20,13 +20,10 @@ remlEstimation <- function(Z.p, Y.p, H, Q)
   return(lambda.reml)
 }
 
-# H and Q are lists of matrices
-#' @export
-buildObjectiveFunction <- function(Z.p, Y.p, H, Q)
+buildObjectiveFunction <- function(Z.p, Y.p, H, Q.inv)
 {
 
-    Q.inv <- lapply(Q, solve) # invert all the Q matrices before building the function
-    q <- length(Q)
+    q <- length(Q.inv)
     h <- length(H)
     function(theta)
     {
@@ -42,26 +39,18 @@ buildObjectiveFunction <- function(Z.p, Y.p, H, Q)
 
 }
 
-#' @export
-fitParameters <- function(Z.p, Y.p, H, Q)
+findTuningParameters <- function(Z.p, Y.p, H, Q.inv)
 {
-    if (!is.list(Q)) Q <- list(Q)
-    if (!is.list(H)) H <- list(H)
-
-
-    fn <- buildObjectiveFunction(Z.p, Y.p, H, Q)
+    fn <- buildObjectiveFunction(Z.p, Y.p, H, Q.inv)
     optim.out <- optimx(par = rep(1, length(Q) + length(H)), fn = fn, method = "Nelder-Mead")
     sapply(1:(length(Q) + length(H)), function(i) optim.out[[paste0("p",i)]])
 
 }
 
-computeBetaHat <- function(Z.p, Y.p, H, Q, theta.hat)
+computeCoefficientEstimates <- function(Z.p, Y.p, H, Q.inv, theta.hat, cov.missing)
 {
-    if (!is.list(Q)) Q <- list(Q)
-    if (!is.list(H)) H <- list(H)
-    q <- length(Q)
+    q <- length(Q.inv)
     h <- length(H)
-    Q.inv <- lapply(Q, solve)
 
     H.sum <- abs(theta.hat[1]) * H[[1]]
     if (h > 1) for (i in 2:h) H.sum <- H.sum + abs(theta.hat[i])*H[[i]]

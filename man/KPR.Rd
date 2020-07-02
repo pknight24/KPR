@@ -6,15 +6,12 @@
 \usage{
 KPR(
   designMatrix,
-  covariates,
+  covariates = NULL,
   Y,
   H = diag(nrow(designMatrix)),
   Q = diag(ncol(designMatrix)),
-  lambda,
   scale = FALSE,
-  inference = FALSE,
-  REML = FALSE,
-  ...
+  REML = FALSE
 )
 }
 \arguments{
@@ -28,21 +25,14 @@ KPR(
 
 \item{Q}{A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.}
 
-\item{lambda}{A fixed value of lambda to be used in fitting the KPR model. If this is missing, an appropriate value is chosen using REML estimation.}
+\item{scale}{Logical, indicates whether to scale \code{Q}, \code{H} and the design matrix to have a spectral norm of 1.}
 
-\item{scale}{Logical, indicates whether to scale \code{Q} and the design matrix.}
-
-\item{inference}{Logical, indicates whether to compute p-values for penalized regression coefficients with the GMD inference.}
-
-\item{...}{Additional parameters passed to the GMD inference}
+\item{REML}{Logical, indicates whether to use REML estimation for finding the parameters. This will only work with a single H and Q matrix.}
 }
 \value{
 \item{beta.hat}{Estimated coefficients for the penalized variables.}
 \item{eta.hat}{Estimated coefficients for the unpenalized variables.}
-\item{theta.hat}{The vector of parameter values found with Maximum Likelihood.}
-\item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
-\item{bound}{The stochastic bound used to compute each p-value.}
-\item{sigmaepsi.hat}{Variance component estimate used in the GMD inference.}
+\item{theta.hat}{The vector of tuning parameter values found with Maximum Likelihood.}
 }
 \description{
 Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.
@@ -50,6 +40,4 @@ Fits a kernel penalized regression model using a design matrix X, response vecto
 \references{
 Randolph et al. (2018) The Annals of Applied Statistics
 (\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
-
-Wang et al. Technical report.
 }
