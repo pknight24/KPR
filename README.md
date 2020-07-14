@@ -7,7 +7,7 @@ penalized regression can be found [here](https://projecteuclid.org/euclid.aoas/1
 
 ## Installation
 
-Install with `devtools::install_gitlab("plbknight/KPR")`
+Install with `devtools::install_github("pknight24/KPR")`
 
 ## Usage
 
@@ -19,5 +19,3 @@ kpr.out <- KPR(designMatrix = X, Y = Y, H = H, Q = Q)
 
 The `kpr.out` object has class `KPR` and includes all of the data used to
 fit the model, as well as coefficient estimates and p-values based on the GMD inference.
-
-For a more thorough example, see [the vignette](https://plbknight.gitlab.io/KPR).
