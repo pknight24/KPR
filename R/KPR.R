@@ -59,7 +59,7 @@ KPR <- function(designMatrix, covariates = NULL, Y, H = diag(nrow(designMatrix))
     Y.p <- P %*% Y
     Z.p <- P %*% Z # apply P to the variables that should be penalized
 
-    if (REML) # this is just for comparing the new method to the old one; should be removed eventually
+    if (REML)
     {
         theta.hat <- remlEstimation(Z.p, Y.p, H[[1]], Q[[1]])
         beta.hat <- Q[[1]] %*% solve(t(Z.p) %*% H[[1]] %*% Z.p %*% Q[[1]] + theta.hat * diag(p)) %*% t(Z.p) %*% H[[1]] %*% Y
@@ -90,7 +90,12 @@ KPR <- function(designMatrix, covariates = NULL, Y, H = diag(nrow(designMatrix))
                 Q = Q,
                 beta.hat = beta.hat,
                 eta.hat = eta.hat)
-    if (REML) output$lambda <- theta.hat
+    if (REML)
+    {
+        output$lambda <- theta.hat
+        output$sigma <- 1
+        output$alpha <- 1
+    }
     else
     {
         output$sigma <- theta.hat$sigma

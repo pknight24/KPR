@@ -4,7 +4,7 @@
 \alias{inference}
 \title{Running the GMD inference on a KPR model}
 \usage{
-inference(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
+inference(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = TRUE, ...)
 }
 \arguments{
 \item{KPR.output}{Output from running the \code{KPR} function.}
@@ -14,6 +14,8 @@ inference(KPR.output, mu = 1, r = 0.05, weight = TRUE, ...)
 \item{r}{GMD inference parameter}
 
 \item{weight}{Logical, indicates whether to include a penalty factor when computing the beta.glasso vector.}
+
+\item{scale}{Logical, indicates whether to scale the design matrix with respect to the eigenvalues of the composite Q matrix.}
 }
 \value{
 An object of classes KPR with the following fields added:
