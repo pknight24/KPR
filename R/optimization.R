@@ -1,3 +1,4 @@
+#' @export
 remlEstimation <- function(Z.p, Y.p, H, Q)
 {
 
@@ -20,7 +21,8 @@ remlEstimation <- function(Z.p, Y.p, H, Q)
   return(lambda.reml)
 }
 
-buildObjectiveFunction <- function(Z.p, Y.p, H, Q)
+#' @export
+buildObjectiveFunction <- function(Z.p, Y.p, H, Q, trick = TRUE)
 {
 
     q <- length(Q)
@@ -31,52 +33,73 @@ buildObjectiveFunction <- function(Z.p, Y.p, H, Q)
     function(theta)
     {
         c_H <- abs(theta[1])
-        H.sum <- abs(theta[2]) * H[[1]]
-        if (h > 1) for (i in 2:h) H.sum <- H.sum + abs(theta[i+1])*H[[i]]
+        if (h > 1) {
+            H.sum <- abs(theta[2]) * H[[1]]
+            for (i in 2:h) H.sum <- H.sum + abs(theta[i+1])*H[[i]]
+        }
+        else H.sum <- H[[1]]
 
-        c_Q <- abs(theta[h+2])
-        Q.sum <- abs(theta[h+3]) * Q[[1]]
-        if (q > 1) for (j in 2:q) Q.sum <- Q.sum + abs(theta[h+2+j])*Q[[j]]
+        k <- h > 1
+        c_Q <- abs(theta[h+1+k])
+        if (q > 1) {
+            Q.sum <- abs(theta[h + 2 + k]) * Q[[1]]
+            for (j in 2:q) Q.sum <- Q.sum + abs(theta[h+1+j+k])*Q[[j]]
+        }
+        else Q.sum <- Q[[1]]
 
         Omega <- c_Q * Z.p %*% Q.sum %*% t(Z.p) + c_H * solve(H.sum)
-        (t(Y.p) %*% solve(Omega) %*% Y.p + log(det(Omega)))[1,1]
+        if (trick) ( t(Y.p) %*% solve(Omega) %*% Y.p + fastLogDet(Omega))[1,1]
+        else ( t(Y.p) %*% solve(Omega) %*% Y.p + log(det(Omega)))[1,1]
     }
 
 
 }
 
-equalityConstraintFn <- function(theta, h)
+#' @export
+equalityConstraintFn <- function(theta, h, q)
 {
-    sigma <- theta[2:(h+1)]
-    alpha <- theta[(h+3):(length(theta))]
-    z1 <- sum(abs(sigma))
-    z2 <- sum(abs(alpha))
-    c(z1 - 1, z2 - 1)
+    if (h > 1) {
+        sigma <- theta[2:(h+1)]
+        z1 <- sum(abs(sigma)) - 1
+    } else z1 <- NULL
+    if (q > 1) {
+        alpha <- theta[(h+2 + (h>1)):(length(theta))]
+        z2 <- sum(abs(alpha)) - 1
+    } else z2 <- NULL
+    if (is.null(z1) & !is.null(z2)) return(z2)
+    if (!is.null(z1) & is.null(z2)) return(z1)
+    c(z1, z2)
 }
 
-findTuningParameters <- function(Z.p, Y.p, H, Q)
+#' @export
+findTuningParameters <- function(Z.p, Y.p, H, Q, trick = TRUE)
 {
     h <- length(H)
     q <- length(Q)
-    fn <- buildObjectiveFunction(Z.p, Y.p, H, Q)
-    theta0 <- c(1,
-                rep(1, h) / h,
-                1,
-                rep(1, q) / q)
-    eq.fn <- function(x) {equalityConstraintFn(x, h)}
-
-    opt.out <- constrOptim.nl(par = theta0, fn = fn, heq = eq.fn,
-                         control.outer = list(trace=FALSE,
-                                              NMinit = TRUE))
-
+    fn <- buildObjectiveFunction(Z.p, Y.p, H, Q, trick)
+    h.theta0 <- 1
+    if (h > 1) h.theta0 <- c(h.theta0, rep(1,h) / h)
+    q.theta0 <- 1
+    if (q > 1) q.theta0 <- c(q.theta0, rep(1,q) / q)
+    theta0 <- c(h.theta0, q.theta0)
+    eq.fn <- function(x) {equalityConstraintFn(x, h, q)}
+    if (h == 1 & q == 1) eq.fn <- NULL
+    print(eq.fn)
+    if (is.null(eq.fn)) opt.out <- optim(par = theta0, fn = fn, method="BFGS")
+    else opt.out <- constrOptim.nl(par = theta0, fn = fn, heq = eq.fn,
+                         control.outer = list(trace=TRUE,
+                                              NMinit = TRUE,
+                                              method = "BFGS"))
+    k <- h > 1
     list(c_H = abs(opt.out$par[1]),
-         sigma = abs(opt.out$par[2:(h+1)]),
-         c_Q = abs(opt.out$par[h+2]),
-         alpha = abs(opt.out$par[(h+3):(h+q+2)]))
+         sigma = ifelse(k, abs(opt.out$par[2:(h+1)]), 1),
+         c_Q = abs(opt.out$par[h+1+k]),
+         alpha = ifelse(q > 1, abs(opt.out$par[(h+2+k):(h+q+1+k)]), 1))
 
 }
 
-# we can probably do better with this
+
+#' @export
 computeCoefficientEstimates <- function(Z.p, Y.p, H, Q, theta.hat)
 {
     h <- length(H)
@@ -94,3 +117,7 @@ computeCoefficientEstimates <- function(Z.p, Y.p, H, Q, theta.hat)
     Q.sum %*% solve(t(Z.p) %*% H.sum %*% Z.p %*% Q.sum + lambda * diag(ncol(Z.p))) %*% t(Z.p) %*% H.sum %*% Y.p
 
 }
+
+
+#' @export
+fastLogDet <- function(A) return(2 * sum(log(diag(chol(A)))))

@@ -68,6 +68,7 @@ KPR <- function(designMatrix, covariates = NULL, Y, H = diag(nrow(designMatrix))
     {
         theta.hat <- findTuningParameters(Z.p, Y.p, H, Q)
         beta.hat <- computeCoefficientEstimates(Z.p, Y.p, H, Q, theta.hat)
+
         names(beta.hat) <- colnames(Z)
     }
     if (cov.missing)
