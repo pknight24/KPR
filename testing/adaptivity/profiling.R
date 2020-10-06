@@ -32,7 +32,7 @@ Q <- readMat("~/Desktop/bcsstk17.mat")$Problem[[2]]
 H <- genPositiveDefMat(dim = nrow(H))$Sigma
 X <- matrix(rnorm(n = nrow(H) * nrow(Q)), nrow = nrow(H), ncol = nrow(Q))
 Y <- rnorm(n = nrow(H))
-ns <- c(100, 500, 1000, nrow(H))
+ns <- c(100, 500)
 p <- 50
 load_all()
 for (n in ns)
@@ -42,7 +42,7 @@ for (n in ns)
     X.sub <- X[1:n, 1:p]
     Y.sub <- Y[1:n]
     runtime <- as.data.frame(
-        microbenchmark(asdf = findTuningParameters(X.sub, Y.sub, H = list(H.sub),
+        microbenchmark(asdf = findTuningParameters(X.sub, Y.sub, H = list(H.sub, diag(n)),
                                                    Q = list(diag(p)), trick=TRUE),times = 1))
     runtime$n <- n
     runtime$p <- p

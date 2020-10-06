@@ -48,7 +48,7 @@ plot(new.est.H.Q$beta.hat, pch=19,
 
 
 # strange inference results with this one
-triH <- KPR(X, Y=Y, H = list(H, X %*% Q %*% t(X), diag(n)), Q = list(Q, diag(p)))
+triH <- KPR(X, Y=Y, H = list(H, X %*% Q %*% t(X), diag(n)), Q = list(diag(p)))
 triH <- inference(triH)
 colors <- rep("black", length(triH$beta.hat))
 colors[triH$p.values < 0.05] <- "red"
