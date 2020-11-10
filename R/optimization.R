@@ -84,17 +84,21 @@ findTuningParameters <- function(Z.p, Y.p, H, Q, trick = TRUE)
     theta0 <- c(h.theta0, q.theta0)
     eq.fn <- function(x) {equalityConstraintFn(x, h, q)}
     if (h == 1 & q == 1) eq.fn <- NULL
-    print(eq.fn)
     if (is.null(eq.fn)) opt.out <- optim(par = theta0, fn = fn, method="BFGS")
     else opt.out <- constrOptim.nl(par = theta0, fn = fn, heq = eq.fn,
                          control.outer = list(trace=TRUE,
                                               NMinit = TRUE,
                                               method = "BFGS"))
     k <- h > 1
+    sigma <- ifelse(k, abs(opt.out$par[(2:(h+1))]), 1)
+    if (k) sigma <- abs(opt.out$par[(2:(h+1))])
+    else sigma <- 1
+    if (q > 1) alpha <- abs(opt.out$par[((h+2+k):(h+q+1+k))])
+    else alpha <- 1
     list(c_H = abs(opt.out$par[1]),
-         sigma = ifelse(k, abs(opt.out$par[2:(h+1)]), 1),
+         sigma = sigma,
          c_Q = abs(opt.out$par[h+1+k]),
-         alpha = ifelse(q > 1, abs(opt.out$par[(h+2+k):(h+q+1+k)]), 1))
+         alpha = alpha)
 
 }
 
