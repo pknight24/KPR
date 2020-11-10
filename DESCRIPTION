@@ -15,9 +15,7 @@ Imports:
   glmnet,
   Rcpp,
   nlme,
-  viridis,
-  hdi,
-  Grace
+  viridis
 Suggests: 
     knitr,
     rmarkdown
