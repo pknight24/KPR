@@ -17,7 +17,7 @@ The Y vector is already centered and scaled, and the X matrix has already been n
 }
 \examples{
 data(flax)
-KPR(designMatrix = flax$X, Y = flax$Y, Q = flax$Q, H = flax$H)
+KPR(X = flax$X, Y = flax$Y, Q = flax$Q, H = flax$H)
 }
 \references{
 Lampe et al. (2019) The American Journal of Clinical Nutrition

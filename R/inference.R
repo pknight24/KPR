@@ -5,6 +5,7 @@
 #' @param r GMD inference parameter
 #' @param weight Logical, indicates whether to include a penalty factor when computing the beta.glasso vector.
 #' @param scale Logical, indicates whether to scale the design matrix with respect to the eigenvalues of the composite Q matrix.
+#' @param ... Additional parameters passed to the GMD function.
 #' @return An object of classes KPR with the following fields added:
 #' \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
 #' \item{bound}{The stochastic bound used to compute each p-value.}
@@ -13,7 +14,7 @@
 inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = TRUE, ...)
 {
 
-  Z <- KPR.output$Z
+  Z <- KPR.output$X
   E <- KPR.output$E # for now, we will ignore the E matrix
   Y <- KPR.output$Y
   H <- KPR.output$H

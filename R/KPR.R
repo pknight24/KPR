@@ -15,7 +15,7 @@
 #' \item{lambda}{The optimal lambda parameter estimated with maximum likelihood.}
 #' \item{alpha}{The vector of optimal weights corresponding to the Q matrices.}
 #' \item{sigma}{The vector of optimal weights corresponding to the H matrices.}
-#' @importFrom stats sd pnorm optimize
+#' @importFrom stats sd pnorm median optim
 #' @importFrom nlme lme pdIdent VarCorr
 #' @importFrom natural olasso_cv
 #' @importFrom glmnet cv.glmnet glmnet

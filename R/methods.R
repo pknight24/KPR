@@ -15,9 +15,11 @@
 #' @export
 biplot.KPR <- function(x, ...)
 {
-  Z <- x$Z
+  Z <- x$X
   H <- x$H
   Q <- x$Q
+  alpha <- x$alpha
+  sigma <- x$sigma
   q <- length(Q)
   h <- length(H)
 
@@ -70,10 +72,10 @@ biplot.KPR <- function(x, ...)
     col = sample.col)
   xaxp = axTicks(1)
   yaxp = axTicks(2)
+  
 
-  if (length(x$lambda) > 1) p.values <- x$p.values[,1]
-  else p.values <- x$p.values
-  signif <- which(p.values < 0.05) # we keep track of the significant coefficients
+  if (is.null(x$p.values)) signif <- rep(1, ncol(Z)) # if there are no pvalues in the object, use all the coefficients
+  else signif <- which(x$p.values < 0.05) # we keep track of the significant coefficients
 
   #calculate coordinates
   V.plot = Q%*%V

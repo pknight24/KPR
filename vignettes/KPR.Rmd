@@ -1,6 +1,8 @@
 ---
-title: "KPR: Kernel Penalized Regression"
-output: rmarkdown::html_vignette
+title: "KPR: Kernel-penalized regression"
+output:
+   html_document:
+      theme: simplex
 vignette: >
   %\VignetteIndexEntry{KPR}
   %\VignetteEngine{knitr::rmarkdown}
@@ -13,54 +15,48 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
-The `KPR` package provides estimation and inference methods for kernel
-penalized regression models, designed for doubly-structured high
-dimensional data. Kernel penalized regression is an extension of
+The `KPR` package provides estimation and inference methods for kernel-penalized regression models, designed for doubly-structured high
+dimensional data. Kernel-penalized regression is an extension of
 ridge regression that allows for the inclusion of external sample-wise and
-parameter-wise structure, expressed through similarity matrices
+parameter-wise structure encoded with positive definite similarity matrices
 (kernels). For example, a researcher analyzing human microbiome data
 may want a regression model that incorporates UniFrac distances between samples (and/or
 phylogenetic distances between microbes). `KPR` provides both
 estimation and inference for individual variables in a penalized
 regression model that accounts for this type of prior structure among
 samples and variables. For further reading on the theory and
-application of kernel penalized regression models, see (Randolph et
+application of kernel-penalized regression models, see (Randolph et
 al, 2018).
 
-##### Notation and Model Formulation
+## Model formulation
 
-Kernel penalized regression models take the form
+Given a data matrix $X \in \mathbb{R}^{n \times p}$, a continuous outcome $Y \in \mathbb{R}^n$, and sample- and variable-wise similarity kernels $H \in \mathbb{R}^{n \times n}$ and $Q \in \mathbb{R}^{p \times p}$, the kernel-penalized regression model seeks a vector $\hat{\beta} \in \mathbb{R}^p$ such that
 
-$$\mathbb{E}(\mathbf{Y}) = \mathbf{Z}\beta + \mathbf{E}\eta$$
+$$\hat{\beta} = \mathop{\mathrm{arg\,min}}_{\beta}
+  \left\{\Vert Y - X\beta \Vert^2_{H} + \lambda\Vert \beta \Vert^2_{Q^{-1}}\right\}$$
 
-where $\mathbf{Y}$ is an $n \times 1$ vector of continous outcomes, $\mathbf{Z}$
-is an $n \times p$ data matrix with columns corresponding to
-*penalized* variables, and $\mathbf{E}$ is an $n \times r$ matrix
-whose columns represent covariates that remain unpenalized.
-$\beta$ is a $p \times 1$ vector of regression coefficients
-corresponding to $\mathbf{Z}$, and $\eta$ is an $r \times 1$ vector of
-coefficients for $\mathbf{E}$
-
-The coefficient vectors $\beta$ and $\eta$ are estimated by the following optimization problem:
-
-$$\hat{\beta}, \hat{\eta} = \mathop{\mathrm{arg\,min}}_{\beta, \eta}
-  \left\{\Vert \mathbf{Y} - \mathbf{Z}\beta - \mathbf{E}\eta
-    \Vert^2_{H} + \lambda\Vert \beta \Vert^2_{Q^{-1}}\right\}$$
-
-$\mathbf{H}$ denotes an $n \times n$ kernel of sample similarities, and
-$\mathbf{Q}$ denotes the $p \times p$ kernel representing prior
-structure of the variables of $\mathbf{Z}$. Note that $n$
-represents the number of samples, $p$ the number of penalized terms, and $r$ the number of
-unpenalized terms. The parameter $\lambda$ is a positive number that
+where $||v||^2_A = v^TAv$ for a positive definite matrix $A$. The tuning parameter $\lambda > 0$
 determines the strength of regularization.
 
-For any positive definite $m \times m$ matrix $\mathbf{A}$, we define
-$\Vert x\Vert_{A}^{2}$ as $x^\top\mathbf{A}x$ for $x \in \mathbb{R}^m$. 
-It is assumed throughout that $\mathbf{H}$ and $\mathbf{Q}$ are both positive definite.
+The `KPR` package also provides support for adaptive kernel-penalized regression models, which can include multiple sample- and variable-wise kernels in the fitting procedure. Given data $X \in \mathbb{R}^{n \times p}$, outcome $Y \in \mathbb{R}^n$, sample-wise kernels $H_1, H_2, ... H_h \in \mathbb{R}^{n \times n}$ and variable-wise kernels $Q_1, Q_2, ... Q_q \in \mathbb{R}^{p \times p}$, adaptive KPR seeks $\hat{\beta} \in \mathbb{R}^p$ with
+
+$$\hat{\beta} = \mathop{\mathrm{arg\,min}}_{\beta}
+  \left\{\Vert Y - X\beta \Vert^2_{\sum\sigma_iH_i} + \lambda\Vert \beta \Vert^2_{\sum\alpha_jQ_j^{-1}}\right\}$$
+  
+  where $\sum\sigma_i = \sum\alpha_j = 1$. The parameters $\sigma_i$ and $\alpha_j$ represent a numerical weight assigned to each kernel. This provides a useful interpretation: a weight close to one indicates that the weight is highly informative to model estimation, and a loop near zero shows that the kernel should be left out of the model altogether. `KPR` estimates the optimal weight set with maximum likelihood.
+
+## Installation
+
+Currently, the only way to install the package is from GitHub.
+
+```{r, eval=FALSE}
+install.package("devtools")
+devtools::install_github("pknight24/KPR")
+```
 
 ## Data processing
 
-For the purposes of our examples, we will use data from the study by
+The demonstrate the KPR model, we use data from the study by
 (Yatsunenko et al, 2012), which is included in the package. The
 `yatsunenko` object is a list containing raw microbe abundance data,
  patristic distances between genera, and the country of origin and age of each subject. We will fit
@@ -68,7 +64,7 @@ a kernel penalized regression model with the microbial abundances as
 the penalized variables, and subject age as the outcome.
 
 In order to incorporate the patristic distance matrix into the regression
-model, we first need to convert it to a similarity kernel, using a
+model, we first need to convert it to a similarity kernel using a
 function provided by the `KPR` package.
 
 ```{r}
@@ -78,16 +74,15 @@ data(yatsunenko)
 age <- yatsunenko$age
 counts <- yatsunenko$raw.counts
 patristic <- yatsunenko$patristic
-geo <- yatsunenko$geography
 ```
 
 The `generateSimilarityKernel` function computes Gower's centered
-similarity kernel $\mathbf{K}$ from any distance matrix $\mathbf{D}$,
+similarity kernel $K$ from any distance matrix $D$,
 specifically
 
-$$\mathbf{K} = -\frac{1}{2}\mathbf{J}\mathbf{D}^{(2)}\mathbf{J}$$
+$$K = -\frac{1}{2}JD^{(2)}J$$
 
-where $\mathbf{J}$ is a centering matrix, and $\mathbf{D}^{(2)}$
+where $J$ is a centering matrix, and $D^{(2)}$
 denotes a matrix of squared distances.
 
 Additionally, if the resulting similarity kernel has any negative or very small
@@ -107,16 +102,11 @@ Finally, we will take the centered log ratio of the count data to
 account for sample quality, as well as center the age vector. Kernel
 penalized regression models are sensitive to scale, and thus the data 
 should be processed with this in mind before beginning the estimation procedure.
-The matrix of covariates $\mathbf{E}$ is produced from the vector of
-countries given in the `yatsunenko` object. This will allow us to fit
-our penalized regression model, while controlling for each subject's
-country of origin. 
 
 ```{r}
 counts.clr <- log(counts + 1) - apply(log(counts + 1), 1, mean)
-Z <- apply(counts.clr, 2, function(x) x - mean(x)) # column center the centered log ratio counts
+X <- apply(counts.clr, 2, function(x) x - mean(x)) # column center the centered log ratio counts
 Y <- log(age) - mean(log(age))
-E <- model.matrix(~ geo)[,-1]
 ```
 
 ## Estimation
@@ -124,50 +114,40 @@ E <- model.matrix(~ geo)[,-1]
 Kernel penalized regression models can be fit using the `KPR` function.
 
 ```{r}
-kpr.out <- KPR(designMatrix = Z, covariates = E, Y = Y,  Q = Q, REML = TRUE)
+kpr.out <- KPR(X = X, Y = Y,  Q = Q)
 ```
 
-The `designMatrix` parameter refers to the data matrix with variables
-subject to penalization, and the `covariates` paramater refers to data with
-unpenalized variables. In the notation detailed above, `designMatrix`
-and `covariates` are referred to as $\mathbf{Z}$ and $\mathbf{E}$
-respectively.
-
 The `KPR` function returns an object of class `KPR`, which includes
-all of the data used to fit the model, `beta.hat` and `eta.hat`
-vectors, and information regarding the selection of the tuning parameter $\lambda$.
+all of the data used to fit the model, a `beta.hat` vector of estimated coefficients, and the optimal tuning parameter $\lambda$ which is computed with restricted maximum likelihood. We can also take advantage of the adaptive capabilities of the software to provide an additional identity matrix kernel to the model. This ridge-like penalty can improve stability and accuracy when the other kernels are poorly conditioned or scientifically uninformative. To do so, we pass the two kernels to the `KPR()` function as a list, shown below.
 
-Finding an optimal value of $\lambda$ is a primary computational
-challenge in fitting kernel penalized regression models. The `KPR`
-function offers two methods for estimating $\lambda$. The
-preferred method is to reformulate the model as a ridge regression
-problem, and find $\lambda$ with Restricted maximum likelihood (REML)
-using the `nlme` package. This option is set to `TRUE` by default. If
-the `REML` parameter is set to `FALSE`, a value of $\lambda$ is computed
-using cross validation from a grid generated internally.
-You may also pass one or more values of $\lambda$ to the function with
-the `lambda` parameter. If more than one value is given, the `KPR`
-function will find the optimal value through cross validation.
+```{r}
+I <- diag(ncol(X))
+kpr.out.2 <- KPR(X = X, Y = Y, Q = list(Q, I))
+```
 
-When more than one value of $\lambda$ is evaluated via cross
-validation, the `beta.hat` and `eta.hat`
-fields will be returned as matrices, where each column corresponds to
-a value of lambda and the rows correspond to the parameters. The
-`KPR` object will also include additonal pertinent information, such
-as the $\lambda$ value that produced the minimum sum of squared errors
-in the cross validation process. See `help(KPR)` for more information.
+We can access the weights assigned to each kernel using the `alpha` field.
+
+```{r}
+kpr.out.2$alpha
+```
 
 ## Inference
 
-The output of `KPR` includes a vector (or matrix) of p-values corresponding to
-each element of $\hat{\beta}$, testing the hypothesis
+The output of `KPR` can be passed to the `inference` function to detect statistically significant variables, testing the hypothesis
 
 $$\textrm{H}_{o}: \beta_j = 0, \textrm{ H}_{\textrm{a}}: \beta_j \neq 0$$
 
-for $j \in 1, 2, ... p$. The p-values are being generated with the GMD
-inference procedure, outlined in (Wang). You can also analyze the output of `KPR` with the
+for $j \in 1, 2, ... p$.
+
+```{r}
+kpr.out <- inference(kpr.out)
+```
+
+This new `kpr.out` object contains a vector `p.values`, which contains p-values generated with the GMD inference procedure (Wang).
+
+You can also analyze the output of `KPR` with the
 `biplot` function. This will generate a "supervised" biplot using the
-Generalized Matrix Decomposition (Wang), in which the  points
+generalized matrix decomposition (Wang), in which the  points
 represent samples and are colored with respect to the outcome
 $\mathbf{Y}$. The arrows plotted represent variables that have been
 selected by the GMD inference (i.e. deemed significant, controlling Type 1 error at

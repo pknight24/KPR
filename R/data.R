@@ -9,7 +9,7 @@
 #' (\href{https://www.ncbi.nlm.nih.gov/pubmed/31175806}{PubMed})
 #' @examples
 #' data(flax)
-#' KPR(designMatrix = flax$X, Y = flax$Y, Q = flax$Q, H = flax$H)
+#' KPR(X = flax$X, Y = flax$Y, Q = flax$Q, H = flax$H)
 "flax"
 
 

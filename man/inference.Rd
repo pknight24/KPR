@@ -16,6 +16,8 @@ inference(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = TRUE, ...)
 \item{weight}{Logical, indicates whether to include a penalty factor when computing the beta.glasso vector.}
 
 \item{scale}{Logical, indicates whether to scale the design matrix with respect to the eigenvalues of the composite Q matrix.}
+
+\item{...}{Additional parameters passed to the GMD function.}
 }
 \value{
 An object of classes KPR with the following fields added:
