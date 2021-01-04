@@ -1,32 +1,3 @@
-#' @export
-print.KPR <- function(x, ...)
-{
-  cat("A fitted KPR model of the form\n\n")
-  cat("\t y = Zb + ")
-  if (!is.null(x$E)) cat("Eh + ")
-  cat("e\n\n")
-  q.trivial <- ifelse(all(x$Q == diag(ncol(x$Z))), "trivial","nontrivial" )
-  h.trivial <- ifelse(all(x$H == diag(nrow(x$Z))), "trivial","nontrivial" )
-  cat("with a", h.trivial, "H matrix and a", q.trivial, "Q matrix.\n\n")
-
-}
-
-#' @export
-summary.KPR <- function(object, ...)
-{
-  cat("Kernel Penalized Regression results, using the GMD inference.\n\n")
-
-
-  infer.out <- object$p.vals
-
-  b <- object$beta.hat
-  l <- c(round(object$lambda), rep("", length(b) - 1))
-  p <- infer.out
-  data.frame(lambda = l, betahat = b, pvalue = p)
-
-}
-
-
 #' A "supervised" GMD biplot
 #'
 #' This plots a GMD biplot of an object of class \code{KPR}. The axes correspond to first and second
@@ -47,6 +18,18 @@ biplot.KPR <- function(x, ...)
   Z <- x$Z
   H <- x$H
   Q <- x$Q
+  q <- length(Q)
+  h <- length(H)
+
+  # we first need to form the composite H and Q matrices
+  H.sum <- sigma[1] * H[[1]]
+  if (h > 1) for (i in 2:h) H.sum <- H.sum + sigma[i]*H[[i]]
+  Q.sum <- alpha[1] * Q[[1]]
+  if (q > 1) for (j in 2:q) Q.sum <- Q.sum + alpha[j]*Q[[j]]
+
+  H <- H.sum
+  Q <- Q.sum
+
   K <- 10
   gmd.out <- GMD(X = Z, H = H, Q = Q, K = K)
   U <- gmd.out$U

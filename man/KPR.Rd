@@ -5,53 +5,41 @@
 \title{Kernel Penalized Regression}
 \usage{
 KPR(
-  designMatrix,
-  covariates,
+  X,
+  E = NULL,
   Y,
-  H = diag(nrow(designMatrix)),
-  Q = diag(ncol(designMatrix)),
-  lambda,
-  scale = TRUE,
-  linear_solve = TRUE,
-  inference = TRUE,
-  ...
+  H = diag(nrow(X)),
+  Q = diag(ncol(X)),
+  scale = FALSE,
+  REML = FALSE
 )
 }
 \arguments{
-\item{designMatrix}{An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.}
+\item{X}{An n x p data matrix, consisting of variables that should be penalized by the Q matrices. Should be scaled and centered.}
 
-\item{covariates}{An n x r data matrix, consisting of variables that should not be penalized. Should be scaled and centered.}
+\item{E}{An n x r data matrix, consisting of variables that should not be penalized. Should be scaled and centered.}
 
 \item{Y}{An n x 1 response vector. Should be scaled and centered.}
 
-\item{H}{An n x n sample similarity kernel. Must be symmetric and positive semidefinite. This defaults to an identity matrix.}
+\item{H}{A list of n x n sample similarity kernels. If only one matrix is included in the model, it does not need to be wrapped as a list. All matrices must be symmetric positive semidefinite. This defaults to a single identity matrix.}
 
-\item{Q}{A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.}
+\item{Q}{A list of p x p variable similarity kernels. If only one matrix is included in the model, it does not need to be wrapped as a list. All matrices must be symmetric positive semidefinite. This defaults to a single identity matrix.}
 
-\item{lambda}{A fixed value of lambda to be used in fitting the KPR model. If this is missing, an appropriate value is chosen using REML estimation.}
+\item{scale}{Logical, indicates whether to scale all the Q's, H's and the design matrix to have a spectral norm of 1.}
 
-\item{scale}{Logical, indicates whether to scale \code{Q} and the design matrix.}
-
-\item{linear_solve}{Logical, indices whether to fit the KPR model by solving a system of linear equations. If set to FALSE, the model is fit by directly using the normal equations.}
-
-\item{inference}{Logical, indicates whether to compute p-values for penalized regression coefficients with the GMD inference.}
-
-\item{...}{Additional parameters passed to the GMD inference}
+\item{REML}{Logical, indicates whether to use REML estimation for finding the parameters. This will only work with a single H and Q matrix, and is the preferred method in this case.}
 }
 \value{
-\item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
-\item{eta.hat}{A matrix of estimated coefficients for the unpenalized variables, where each column corresponds to a different value of lambda.}
-\item{lambda}{The vector of lambda values used in cross validation.}
-\item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
-\item{bound}{The stochastic bound used to compute each p-value.}
-\item{sigmaepsi.hat}{Variance component estimate used in the GMD inference.}
+\item{beta.hat}{Estimated coefficients for the penalized variables.}
+\item{eta.hat}{Estimated coefficients for the unpenalized variables.}
+\item{lambda}{The optimal lambda parameter estimated with maximum likelihood.}
+\item{alpha}{The vector of optimal weights corresponding to the Q matrices.}
+\item{sigma}{The vector of optimal weights corresponding to the H matrices.}
 }
 \description{
-Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.
+Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernels H_1, H_2, ..., H_h, and variable similarity kernels Q_1, ..., Q_q.
 }
 \references{
 Randolph et al. (2018) The Annals of Applied Statistics
 (\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
-
-Wang et al. Technical report.
 }

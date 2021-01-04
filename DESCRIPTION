@@ -8,16 +8,14 @@ Description: Fits kernel penalized regression models.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 LinkingTo: Rcpp, RcppArmadillo
 Imports:
   natural,
   glmnet,
   Rcpp,
   nlme,
-  viridis,
-  hdi,
-  Grace
+  viridis
 Suggests: 
     knitr,
     rmarkdown

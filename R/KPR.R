@@ -1,108 +1,113 @@
 #' Kernel Penalized Regression
 #'
-#' Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.
+#' Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernels H_1, H_2, ..., H_h, and variable similarity kernels Q_1, ..., Q_q.
 #'
-#' @param designMatrix An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.
-#' @param covariates An n x r data matrix, consisting of variables that should not be penalized. Should be scaled and centered.
+#' @param X An n x p data matrix, consisting of variables that should be penalized by the Q matrices. Should be scaled and centered.
+#' @param E An n x r data matrix, consisting of variables that should not be penalized. Should be scaled and centered.
 #' @param Y An n x 1 response vector. Should be scaled and centered.
-#' @param H An n x n sample similarity kernel. Must be symmetric and positive semidefinite. This defaults to an identity matrix.
-#' @param Q A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.
-#' @param lambda A fixed value of lambda to be used in fitting the KPR model. If this is missing, an appropriate value is chosen using REML estimation.
-#' @param scale Logical, indicates whether to scale \code{Q} and the design matrix.
-#' @param linear_solve Logical, indices whether to fit the KPR model by solving a system of linear equations. If set to FALSE, the model is fit by directly using the normal equations.
-#' @param inference Logical, indicates whether to compute p-values for penalized regression coefficients with the GMD inference.
-#' @param ... Additional parameters passed to the GMD inference
+#' @param H A list of n x n sample similarity kernels. If only one matrix is included in the model, it does not need to be wrapped as a list. All matrices must be symmetric positive semidefinite. This defaults to a single identity matrix.
+#' @param Q A list of p x p variable similarity kernels. If only one matrix is included in the model, it does not need to be wrapped as a list. All matrices must be symmetric positive semidefinite. This defaults to a single identity matrix.
+#' @param scale Logical, indicates whether to scale all the Q's, H's and the design matrix to have a spectral norm of 1.
+#' @param REML Logical, indicates whether to use REML estimation for finding the parameters. This will only work with a single H and Q matrix, and is the preferred method in this case.
 #' @return
-#' \item{beta.hat}{A matrix of estimated coefficients for the penalized variables, where each column corresponds to a different value of lambda.}
-#' \item{eta.hat}{A matrix of estimated coefficients for the unpenalized variables, where each column corresponds to a different value of lambda.}
-#' \item{lambda}{The vector of lambda values used in cross validation.}
-#' \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
-#' \item{bound}{The stochastic bound used to compute each p-value.}
-#' \item{sigmaepsi.hat}{Variance component estimate used in the GMD inference.}
+#' \item{beta.hat}{Estimated coefficients for the penalized variables.}
+#' \item{eta.hat}{Estimated coefficients for the unpenalized variables.}
+#' \item{lambda}{The optimal lambda parameter estimated with maximum likelihood.}
+#' \item{alpha}{The vector of optimal weights corresponding to the Q matrices.}
+#' \item{sigma}{The vector of optimal weights corresponding to the H matrices.}
 #' @importFrom stats sd pnorm optimize
-#' @importFrom Rcpp sourceCpp
 #' @importFrom nlme lme pdIdent VarCorr
 #' @importFrom natural olasso_cv
 #' @importFrom glmnet cv.glmnet glmnet
+#' @importFrom alabama constrOptim.nl
 #' @references Randolph et al. (2018) The Annals of Applied Statistics
 #' (\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
-#'
-#' Wang et al. Technical report.
 #' @useDynLib KPR, .registration = TRUE
 #' @export
-KPR <- function(designMatrix, covariates, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
-                lambda, scale = TRUE, linear_solve = TRUE,
-                inference = TRUE, ...)
+KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
+                scale = FALSE, REML = FALSE)
 {
+
+  if (!is.list(Q)) Q <- list(Q) # this handles the case when q = h = 1
+  if (!is.list(H)) H <- list(H)
+
   if (scale)
   {
-    eigen.Q <- eigen(Q)
-    Q <- (1/eigen.Q$values[1]) * Q # standardize Q
+      for (j in 1:length(Q))
+      {
+           eigen.Q <- eigen(Q[[j]])
+           Q[[j]] <- eigen.Q$vectors %*% (eigen.Q$values/eigen.Q$values[1]) %*% t(eigen.Q$vectors) # standardize each Q
+      }
+      for (i in 1:length(H))
+      {
+          eigen.H <- eigen(H[[i]])
+           H[[i]] <- eigen.H$vectors %*% (eigen.H$values/eigen.H$values[1]) %*% t(eigen.H$vectors) # standardize each H
+      }
 
-    XU <- designMatrix %*% eigen.Q$vectors
-    XU.std <- apply(XU, 2, function(x) sqrt(length(x)) * x / sqrt(as.vector(t(x) %*% H %*% x) ))
 
-    Z <- XU.std %*% t(eigen.Q$vectors)
-    colnames(Z) <- colnames(designMatrix)
-  }
-  else Z <- designMatrix
+      eigen.Z <- eigen(X)
+      Z <- eigen.Z$vectors %*% (eigen.Z$values/eigen.Z$values[1]) %*% t(eigen.Z$vectors) # standardize Z
+    }
+    else Z <- X
 
+    cov.missing <- is.null(E)
+    n <- nrow(Z)
+    p <- ncol(Z) # number of penalized variables
 
-  cov.missing <- missing(covariates)
-  n <- nrow(Z)
-  p <- ncol(Z) # number of penalized variables
-  if (cov.missing) E <- matrix(0, n) # arbitrarily set E to a zero vector if no covariates are given
-  else E <- as.matrix(covariates)
+    if (cov.missing) P <- diag(n)
+    else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H # how do we build this projection matrix with multiple H matrices? discuss w Tim
 
-  if (missing(lambda)) lambda <- remlEstimation(Z, E, Y, H, Q, cov.missing)
-  
-  if (cov.missing) P <- diag(n)
-  else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
-  
-  Y.p <- P %*% Y
-  Z.p <- P %*% Z # apply P to the variables that should be penalized
-  
-  if (linear_solve)
-  {
-  beta.hat <- Q %*% solve(a = t(Z.p) %*% H %*% Z.p %*% Q + lambda * diag(p),
-                          b = t(Z.p) %*% H %*% Y.p)
-  }
-  else
-  {
-   beta.hat <- Q %*% solve( t(Z.p) %*% H %*% Z.p %*% Q + lambda * diag(p) ) %*% t(Z.p) %*% H %*% Y.p # penalized coefficients 
-  }
+    Y.p <- P %*% Y
+    Z.p <- P %*% Z # apply P to the variables that should be penalized
 
-  if (cov.missing) eta.hat <- 0
-  else eta.hat <- solve(t(E) %*% H %*% E) %*% t(E) %*% H %*% (Y - Z %*% beta.hat)
-      
-  rownames(beta.hat) <- colnames(Z)
-  rownames(eta.hat) <- colnames(E)
+    if (REML)
+    {
+        theta.hat <- remlEstimation(Z.p, Y.p, H[[1]], Q[[1]])
+        beta.hat <- Q[[1]] %*% solve(t(Z.p) %*% H[[1]] %*% Z.p %*% Q[[1]] + theta.hat * diag(p)) %*% t(Z.p) %*% H[[1]] %*% Y
+    }
+    else # here is our new method
+    {
+        theta.hat <- findTuningParameters(Z.p, Y.p, H, Q)
+        beta.hat <- computeCoefficientEstimates(Z.p, Y.p, H, Q, theta.hat)
 
-  if (cov.missing) eta.hat <- NULL
-  if (cov.missing) E <- NULL
+        names(beta.hat) <- colnames(Z)
+    }
+    if (cov.missing)
+    {
+        eta.hat <- NULL
+        E <- NULL
+    }
+    else
+    {
+        h <- length(h)
+        H.sum <- abs(theta.hat$sigma[1]) * H[[1]]
+        if (h > 1) for (i in 2:h) H.sum <- H.sum + abs(theta.hat$sigma[i])*H[[i]]
+        eta.hat <- solve(t(E) %*% H.sum %*% E) %*% t(E) %*% H.sum %*% (Y - Z %*% beta.hat)
+        names(eta.hat) <- colnames(E)
+    }
+    output <- list(X = Z,
+                E = E,
+                Y = Y,
+                H = H,
+                Q = Q,
+                beta.hat = beta.hat,
+                eta.hat = eta.hat)
+    if (REML)
+    {
+        output$lambda <- theta.hat
+        output$sigma <- 1
+        output$alpha <- 1
+    }
+    else
+    {
+        output$sigma <- theta.hat$sigma
+        output$alpha <- theta.hat$alpha
+        output$lambda <- theta.hat$c_H / theta.hat$c_Q
+    }
 
-  output <- list(Z = Z,
-              E = E,
-              Y = Y,
-              H = H,
-              Q = Q,
-              beta.hat = beta.hat,
-              eta.hat = eta.hat,
-              lambda = lambda)
-  if (inference) {
-    infer.out <- GMD.inference(output,...)
-    output$p.values <- infer.out$p.values
-    output$bound <- infer.out$bound
-    output$sigmaepsi.hat <- infer.out$sigmaepsi.hat
-  }
-  else {
-     output$p.values  <- NULL
-     output$bound <- NULL
-     output$sigmaepsi.hat <- NULL
-  }
-  class(output) <- "KPR"
+    class(output) <- "KPR"
 
-  return(output)
+    return(output)
 
 }
 
