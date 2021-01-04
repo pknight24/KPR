@@ -26,4 +26,4 @@ kpr.out <- inference(kpr.out)
 
 This new `kpr.out` object also contains a list of p-values corresponding to each variable in the model.
 
-For a more detailed example, see the vignette.
+For a more detailed example, see the [vignette](https://pknight24.github.io/KPR).
