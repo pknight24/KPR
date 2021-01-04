@@ -1,18 +1,20 @@
 #' Kernel Penalized Regression
 #'
-#' Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernel H, and variable similarity kernel Q.
+#' Fits a kernel penalized regression model using a design matrix X, response vector Y, sample similarity kernels H_1, H_2, ..., H_h, and variable similarity kernels Q_1, ..., Q_q.
 #'
-#' @param designMatrix An n x p data matrix, consisting of variables that should be penalized by \code{Q}. Should be scaled and centered.
-#' @param covariates An n x r data matrix, consisting of variables that should not be penalized. Should be scaled and centered.
+#' @param X An n x p data matrix, consisting of variables that should be penalized by the Q matrices. Should be scaled and centered.
+#' @param E An n x r data matrix, consisting of variables that should not be penalized. Should be scaled and centered.
 #' @param Y An n x 1 response vector. Should be scaled and centered.
-#' @param H An n x n sample similarity kernel. Must be symmetric and positive semidefinite. This defaults to an identity matrix.
-#' @param Q A p x p variable similarity kernel. Must be symmetric and postive semidefinite. This defaults to an identity matrix.
-#' @param scale Logical, indicates whether to scale \code{Q}, \code{H} and the design matrix to have a spectral norm of 1.
-#' @param REML Logical, indicates whether to use REML estimation for finding the parameters. This will only work with a single H and Q matrix.
+#' @param H A list of n x n sample similarity kernels. If only one matrix is included in the model, it does not need to be wrapped as a list. All matrices must be symmetric positive semidefinite. This defaults to a single identity matrix.
+#' @param Q A list of p x p variable similarity kernels. If only one matrix is included in the model, it does not need to be wrapped as a list. All matrices must be symmetric positive semidefinite. This defaults to a single identity matrix.
+#' @param scale Logical, indicates whether to scale all the Q's, H's and the design matrix to have a spectral norm of 1.
+#' @param REML Logical, indicates whether to use REML estimation for finding the parameters. This will only work with a single H and Q matrix, and is the preferred method in this case.
 #' @return
 #' \item{beta.hat}{Estimated coefficients for the penalized variables.}
 #' \item{eta.hat}{Estimated coefficients for the unpenalized variables.}
-#' \item{theta.hat}{The vector of tuning parameter values found with Maximum Likelihood.}
+#' \item{lambda}{The optimal lambda parameter estimated with maximum likelihood.}
+#' \item{alpha}{The vector of optimal weights corresponding to the Q matrices.}
+#' \item{sigma}{The vector of optimal weights corresponding to the H matrices.}
 #' @importFrom stats sd pnorm optimize
 #' @importFrom nlme lme pdIdent VarCorr
 #' @importFrom natural olasso_cv
@@ -22,7 +24,7 @@
 #' (\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
 #' @useDynLib KPR, .registration = TRUE
 #' @export
-KPR <- function(designMatrix, covariates = NULL, Y, H = diag(nrow(designMatrix)), Q = diag(ncol(designMatrix)),
+KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
                 scale = FALSE, REML = FALSE)
 {
 
@@ -43,18 +45,17 @@ KPR <- function(designMatrix, covariates = NULL, Y, H = diag(nrow(designMatrix))
       }
 
 
-      eigen.Z <- eigen(designMatrix)
+      eigen.Z <- eigen(X)
       Z <- eigen.Z$vectors %*% (eigen.Z$values/eigen.Z$values[1]) %*% t(eigen.Z$vectors) # standardize Z
     }
-    else Z <- designMatrix
+    else Z <- X
 
-    cov.missing <- is.null(covariates)
+    cov.missing <- is.null(E)
     n <- nrow(Z)
     p <- ncol(Z) # number of penalized variables
-    E <- covariates
 
     if (cov.missing) P <- diag(n)
-    else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H
+    else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H # how do we build this projection matrix with multiple H matrices? discuss w Tim
 
     Y.p <- P %*% Y
     Z.p <- P %*% Z # apply P to the variables that should be penalized
@@ -84,7 +85,7 @@ KPR <- function(designMatrix, covariates = NULL, Y, H = diag(nrow(designMatrix))
         eta.hat <- solve(t(E) %*% H.sum %*% E) %*% t(E) %*% H.sum %*% (Y - Z %*% beta.hat)
         names(eta.hat) <- colnames(E)
     }
-    output <- list(Z = Z,
+    output <- list(X = Z,
                 E = E,
                 Y = Y,
                 H = H,

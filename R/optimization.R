@@ -1,4 +1,3 @@
-#' @export
 remlEstimation <- function(Z.p, Y.p, H, Q)
 {
 
@@ -21,7 +20,6 @@ remlEstimation <- function(Z.p, Y.p, H, Q)
   return(lambda.reml)
 }
 
-#' @export
 buildObjectiveFunction <- function(Z.p, Y.p, H, Q, trick = TRUE)
 {
 
@@ -55,7 +53,6 @@ buildObjectiveFunction <- function(Z.p, Y.p, H, Q, trick = TRUE)
 
 }
 
-#' @export
 equalityConstraintFn <- function(theta, h, q)
 {
     if (h > 1) {
@@ -71,7 +68,6 @@ equalityConstraintFn <- function(theta, h, q)
     c(z1, z2)
 }
 
-#' @export
 findTuningParameters <- function(Z.p, Y.p, H, Q, trick = TRUE)
 {
     h <- length(H)
@@ -86,7 +82,7 @@ findTuningParameters <- function(Z.p, Y.p, H, Q, trick = TRUE)
     if (h == 1 & q == 1) eq.fn <- NULL
     if (is.null(eq.fn)) opt.out <- optim(par = theta0, fn = fn, method="BFGS")
     else opt.out <- constrOptim.nl(par = theta0, fn = fn, heq = eq.fn,
-                         control.outer = list(trace=TRUE,
+                         control.outer = list(trace=FALSE,
                                               NMinit = TRUE,
                                               method = "BFGS"))
     k <- h > 1
@@ -103,7 +99,6 @@ findTuningParameters <- function(Z.p, Y.p, H, Q, trick = TRUE)
 }
 
 
-#' @export
 computeCoefficientEstimates <- function(Z.p, Y.p, H, Q, theta.hat)
 {
     h <- length(H)
@@ -123,5 +118,4 @@ computeCoefficientEstimates <- function(Z.p, Y.p, H, Q, theta.hat)
 }
 
 
-#' @export
 fastLogDet <- function(A) return(2 * sum(log(diag(chol(A)))))
