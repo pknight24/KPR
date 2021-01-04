@@ -1,4 +1,4 @@
-# Kernel-penalized eegression
+# Kernel-penalized regression
 
 The `KPR` package provides estimation and inference methods for kernel-penalized regression models, designed for doubly-structured high
 dimensional data. An explanation of the theory and usage of kernel-penalized regression can be found [here](https://projecteuclid.org/euclid.aoas/1520564483).
