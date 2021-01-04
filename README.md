@@ -14,8 +14,18 @@ Install with `devtools::install_github("pknight24/KPR")`
 Model fitting is performed with the `KPR()` function.
 
 ```{r}
-kpr.out <- KPR(designMatrix = X, Y = Y, H = H, Q = Q)
+kpr.out <- KPR(X = X, Y = Y, H = H, Q = Q)
 ```
 
 The `kpr.out` object has class `KPR` and includes all of the data used to
-fit the model, as well as coefficient estimates and p-values based on the GMD inference.
+fit the model, as well as coefficient estimates and tuning parameters.
+
+The package also provides support for variable selection using the GMD inference.
+
+```{r}
+kpr.out <- inference(kpr.out)
+```
+
+This new `kpr.out` object also contains a list of p-values corresponding to each variable in the model.
+
+For a more detailed example, see the vignette.
