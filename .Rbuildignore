@@ -10,3 +10,4 @@
 ^public$
 ^\.gitlab-ci.yml
 ^\.travis\.yml$
+^\.github$

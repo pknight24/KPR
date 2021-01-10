@@ -1,5 +1,9 @@
 # Kernel-penalized regression
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/pknight24/KPR/workflows/R-CMD-check/badge.svg)](https://github.com/pknight24/KPR/actions)
+<!-- badges: end -->
+
 The `KPR` package provides estimation and inference methods for kernel-penalized regression models, designed for doubly-structured high
 dimensional data. An explanation of the theory and usage of kernel-penalized regression can be found [here](https://projecteuclid.org/euclid.aoas/1520564483).
 
