@@ -1,10 +1,10 @@
 Package: KPR
 Type: Package
-Title: Kernel Penalized Regression
-Version: 0.8
+Title: Kernel-penalized regression
+Version: 0.9
 Author: Parker Knight
 Maintainer: Parker Knight <pknight24@ufl.edu>
-Description: Fits kernel penalized regression models.
+Description: Fits kernel-penalized regression models.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
@@ -12,7 +12,6 @@ RoxygenNote: 7.1.1
 LinkingTo: Rcpp, RcppArmadillo
 Depends: R (>= 2.10)
 Imports:
-  natural,
   glmnet,
   Rcpp,
   nlme,

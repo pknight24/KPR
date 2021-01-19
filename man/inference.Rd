@@ -4,7 +4,7 @@
 \alias{inference}
 \title{Running the GMD inference on a KPR model}
 \usage{
-inference(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = TRUE, ...)
+inference(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = FALSE, ...)
 }
 \arguments{
 \item{KPR.output}{Output from running the \code{KPR} function.}
@@ -23,7 +23,6 @@ inference(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = TRUE, ...)
 An object of classes KPR with the following fields added:
 \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
 \item{bound}{The stochastic bound used to compute each p-value.}
-\item{sigmaepsi.hat}{Variance component estimate used in the GMD inference.}
 }
 \description{
 Running the GMD inference on a KPR model

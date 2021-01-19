@@ -9,9 +9,8 @@
 #' @return An object of classes KPR with the following fields added:
 #' \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
 #' \item{bound}{The stochastic bound used to compute each p-value.}
-#' \item{sigmaepsi.hat}{Variance component estimate used in the GMD inference.}
 #' @export
-inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = TRUE, ...)
+inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = FALSE, ...)
 {
 
   Z <- KPR.output$X
@@ -26,7 +25,7 @@ inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = TRUE,
   p <- dim(Z)[2]
   q <- length(Q)
   h <- length(H)
-  beta.hat.uncorrected <- KPR.output$beta.hat # before correction
+  beta.KPR <- KPR.output$beta.hat # before correction
 
   # we first need to form the composite H and Q matrices
   H.sum <- sigma[1] * H[[1]]
@@ -61,26 +60,31 @@ inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = TRUE,
 
   U <- gmd.out$U
   V <- gmd.out$V
-  S <- gmd.out$S
+  D <- gmd.out$S
 
-  W.long <- sapply(S, function(s) s^2 / (s^2 + lambda)^2)
+  W <- D^2 / (D^2 + lambda)
 
-  # bias-correction
-  L.H <- t(chol(H))
-  L.Q <- t(chol(Q))
-  eigen.Q <- eigen(Q)
-  vectors.Q <- eigen.Q$vectors
-  values.Q <- eigen.Q$values
+  ## bias-correction
+  eigen.H = eigen(H)
+  values.H = eigen.H$values
+  vectors.H = eigen.H$vectors
+  L.H = vectors.H[,values.H > 0]%*%diag(sqrt(values.H[values.H > 0]))%*%t(vectors.H[, values.H > 0])
+  L.H.inv = vectors.H[,values.H > 0]%*%diag(1/sqrt(values.H[values.H > 0]))%*%t(vectors.H[, values.H > 0])
+
+  eigen.Q = eigen(Q)
+  values.Q = eigen.Q$values[eigen.Q$values > 0]
+  vectors.Q = eigen.Q$vectors[, eigen.Q$values > 0]
+  L.Q = vectors.Q%*%diag(sqrt(values.Q))
 
   Z.tilde = t(L.H)%*%Z.p%*%vectors.Q
   Y.tilde = t(L.H)%*%Y.p
 
-  # using natural lasso method
-  olasso.fit = natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)
-  sigmaepsi.hat = olasso.fit$sig_obj
-  for (i in 1:49) sigmaepsi.hat <- c(sigmaepsi.hat,
-                                      natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)$sig_obj)
-  sigmaepsi.hat <- median(sigmaepsi.hat)
+  ### using natural lasso method
+  ##olasso.fit = natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)
+  ##sigmaepsi.hat = olasso.fit$sig_obj
+  ##for (i in 1:49) sigmaepsi.hat <- c(sigmaepsi.hat,
+  ##                                    natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)$sig_obj)
+  ##sigmaepsi.hat <- median(sigmaepsi.hat)
 
   if(weight == TRUE)
   {
@@ -93,37 +97,31 @@ inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = TRUE,
     beta.glasso = glmnet::glmnet(Z.tilde, Y.tilde, alpha = 1, lambda = lambda.opt, intercept = FALSE, standardize = TRUE)$beta
   }
 
-  beta.init = as.numeric(vectors.Q%*%beta.glasso)
-
-  Xi.long <- diag(Q%*%V%*%diag(W.long)%*%t(V))
-
-  bias.hat <- Q%*%V%*%diag(W.long)%*%t(V)%*%beta.init - (1 - mu)*Xi.long*beta.init - mu*beta.init
-
-  beta.hat.cor <- beta.hat.uncorrected  - bias.hat
-
+  beta.lasso = as.numeric(vectors.Q%*%beta.glasso)
+  Xi = diag(Q%*%V%*%diag(W)%*%t(V))
+  beta.cor = Q%*%V%*%diag(W)%*%t(V)%*%beta.lasso - (1 - mu)*Xi*beta.lasso - mu*beta.lasso
+  beta.hat = beta.KPR  - beta.cor
 
   # covariance
-  # this finds the value of Sigma_jj * sigmaepsi_hat^2, used in the calculation of the p values
-  diag.cov.hat.long <- diag(sigmaepsi.hat^2*Q%*%V%*%diag(S^(-2)*W.long*W.long)%*%t(V)%*%Q)
+  cov.hat = Q%*%V%*%diag(D^(-2)*W*W)%*%t(V)%*%Q
+  diag.cov.hat = diag(cov.hat)
+  bound.mat = (Q%*%V%*%diag(W)%*%t(V) - (1- mu)*diag(Xi) - mu*diag(rep(1,p)))%*%vectors.Q
+  bound.hat = apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
 
-  bound.mat <- (Q%*%V%*%diag(W.long)%*%t(V) - (1- mu)*diag(Xi.long) - mu*diag(rep(1,p)))%*%L.Q
-  bound.hat.long <- sigmaepsi.hat * apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
+  # p-values
+  beta.temp = abs(beta.hat) - bound.hat
+  p.vec = rep(0,p)
+  for(i in 1:p){
 
-  # p-values computed as given in 3.6
-    beta.temp = abs(beta.hat.cor) - bound.hat.long
-    p.vec = rep(0,p)
-    for(i in 1:p){
+    if(beta.temp[i] > 0){p.vec[i] = 2*(1 - pnorm(beta.temp[i]/sqrt(diag.cov.hat[i])))}
+    if(beta.temp[i] <= 0){p.vec[i] = 1}
 
-      if(beta.temp[i] > 0){p.vec[i] = 2*(1 - pnorm(beta.temp[i]/sqrt(diag.cov.hat.long[i])))}
-      if(beta.temp[i] <= 0){p.vec[i] = 1}
-
-    }
+  }
 
     names(p.vec) <- colnames(Z)
 
     KPR.output$p.values <- p.vec
-    KPR.output$bound <- bound.hat.long
-    KPR.output$sigmaepsi.hat <- sigmaepsi.hat
+    KPR.output$bound <- bound.hat
 
     return(KPR.output)
 }

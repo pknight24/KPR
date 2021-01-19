@@ -17,7 +17,6 @@
 #' \item{sigma}{The vector of optimal weights corresponding to the H matrices.}
 #' @importFrom stats sd pnorm median optim
 #' @importFrom nlme lme pdIdent VarCorr
-#' @importFrom natural olasso_cv
 #' @importFrom glmnet cv.glmnet glmnet
 #' @importFrom alabama constrOptim.nl
 #' @references Randolph et al. (2018) The Annals of Applied Statistics
