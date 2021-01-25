@@ -35,17 +35,17 @@ KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
       for (j in 1:length(Q))
       {
            eigen.Q <- eigen(Q[[j]])
-           Q[[j]] <- eigen.Q$vectors %*% (eigen.Q$values/eigen.Q$values[1]) %*% t(eigen.Q$vectors) # standardize each Q
+           Q[[j]] <- eigen.Q$vectors %*% diag((eigen.Q$values/eigen.Q$values[1])) %*% t(eigen.Q$vectors) # standardize each Q
       }
       for (i in 1:length(H))
       {
           eigen.H <- eigen(H[[i]])
-           H[[i]] <- eigen.H$vectors %*% (eigen.H$values/eigen.H$values[1]) %*% t(eigen.H$vectors) # standardize each H
+           H[[i]] <- eigen.H$vectors %*% diag((eigen.H$values/eigen.H$values[1])) %*% t(eigen.H$vectors) # standardize each H
       }
 
 
-      eigen.Z <- eigen(X)
-      Z <- eigen.Z$vectors %*% (eigen.Z$values/eigen.Z$values[1]) %*% t(eigen.Z$vectors) # standardize Z
+      svd.Z <- svd(X)
+      Z <- svd.Z$u %*% diag((svd.Z$d/svd.Z$d[1])) %*% t(svd.Z$v) # standardize Z
     }
     else Z <- X
 
