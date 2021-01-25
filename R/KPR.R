@@ -21,7 +21,6 @@
 #' @importFrom alabama constrOptim.nl
 #' @references Randolph et al. (2018) The Annals of Applied Statistics
 #' (\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
-#' @useDynLib KPR, .registration = TRUE
 #' @export
 KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
                 scale = FALSE, REML = FALSE)
