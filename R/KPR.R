@@ -9,6 +9,8 @@
 #' @param Q A list of p x p variable similarity kernels. If only one matrix is included in the model, it does not need to be wrapped as a list. All matrices must be symmetric positive semidefinite. This defaults to a single identity matrix.
 #' @param scale Logical, indicates whether to scale all the Q's, H's and the design matrix to have a spectral norm of 1.
 #' @param REML Logical, indicates whether to use REML estimation for finding the parameters. This will only work with a single H and Q matrix, and is the preferred method in this case.
+#' @param control.outer A list of parameters used by the outer loop in `constrOptim.nl`. This is only used when `REML = FALSE`.
+#' @param control.optim A list of parameters used by the inner loop in `constrOptim.nl`.
 #' @return
 #' \item{beta.hat}{Estimated coefficients for the penalized variables.}
 #' \item{eta.hat}{Estimated coefficients for the unpenalized variables.}
@@ -23,7 +25,7 @@
 #' (\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
 #' @export
 KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
-                scale = FALSE, REML = FALSE)
+                scale = FALSE, REML = FALSE, control.outer, control.optim)
 {
 
   if (!is.list(Q)) Q <- list(Q) # this handles the case when q = h = 1
