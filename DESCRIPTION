@@ -11,12 +11,15 @@ LazyData: true
 RoxygenNote: 7.1.1
 Depends: R (>= 2.10)
 Imports:
-  glmnet,
-  nlme,
-  viridis,
-  alabama
+    glmnet,
+    nlme,
+    viridis,
+    alabama,
+    Rcpp
 Suggests: 
     knitr,
     rmarkdown,
     rmdformats
 VignetteBuilder: knitr
+LinkingTo: 
+    Rcpp
