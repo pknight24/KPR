@@ -21,6 +21,10 @@ Suggests:
     rmarkdown,
     rmdformats
 VignetteBuilder: knitr
-LinkingTo: 
+LinkingTo:
     Rcpp,
-    RcppEigen
+    RcppEigen,
+    StanHeaders (>= 2.18.0),
+    RcppParallel
+SystemRequirements:
+    GNU make
