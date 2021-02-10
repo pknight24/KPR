@@ -22,4 +22,5 @@ Suggests:
     rmdformats
 VignetteBuilder: knitr
 LinkingTo: 
-    Rcpp
+    Rcpp,
+    RcppEigen
