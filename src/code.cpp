@@ -12,7 +12,7 @@ This function should compute the gradient of the KPR likelihood at vector theta 
 **/
 
  // [Rcpp::export]
- VectorXd gradient_auto(VectorXd theta_) // this needs to also take arguments corresponding to X, Y, H, and Q
+ VectorXd gradient_auto(VectorXd theta_, MatrixXd X, VectorXd Y, List H, List Q, int h, int q)
  {
 
    std::vector<stan::math::var> theta(theta_.size()); // create a new vector of type stan::math::var and copy the contents of theta_ to it
