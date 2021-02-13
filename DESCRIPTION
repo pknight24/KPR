@@ -1,7 +1,7 @@
 Package: KPR
 Type: Package
 Title: Kernel-penalized regression
-Version: 1.0
+Version: 1.1
 Author: Parker Knight
 Maintainer: Parker Knight <pknight24@ufl.edu>
 Description: Fits kernel-penalized regression models.
@@ -15,16 +15,9 @@ Imports:
     nlme,
     viridis,
     alabama,
-    Rcpp
+    torch
 Suggests: 
     knitr,
     rmarkdown,
     rmdformats
 VignetteBuilder: knitr
-LinkingTo:
-    Rcpp,
-    RcppEigen,
-    StanHeaders (>= 2.18.0),
-    RcppParallel
-SystemRequirements:
-    GNU make

@@ -11,6 +11,7 @@
 #' @param REML Logical, indicates whether to use REML estimation for finding the parameters. This will only work with a single H and Q matrix, and is the preferred method in this case.
 #' @param control.outer A list of parameters used by the outer loop in `constrOptim.nl`. This is only used when `REML = FALSE`.
 #' @param control.optim A list of parameters used by the inner loop in `constrOptim.nl`.
+#' @param use_autograd Logical, indicates whether to use the `torch` library to improve optimization performance.
 #' @return
 #' \item{beta.hat}{Estimated coefficients for the penalized variables.}
 #' \item{eta.hat}{Estimated coefficients for the unpenalized variables.}
@@ -21,15 +22,22 @@
 #' @importFrom nlme lme pdIdent VarCorr
 #' @importFrom glmnet cv.glmnet glmnet
 #' @importFrom alabama constrOptim.nl
+#' @importFrom torch torch_tensor torch_inverse torch_logdet torch_matmul
 #' @references Randolph et al. (2018) The Annals of Applied Statistics
 #' (\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
 #' @export
 KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
-                scale = FALSE, REML = FALSE, control.outer, control.optim)
+                scale = FALSE, REML = FALSE, control.outer = list(trace=FALSE, NMinit = TRUE, method = "BFGS"), 
+                control.optim = list(), use_autograd = TRUE)
 {
-
-  if (!is.list(Q)) Q <- list(Q) # this handles the case when q = h = 1
+  
+   # this handles the case when q = h = 1
+  if (!is.list(Q) & !is.list(H)) REML <- TRUE # we should default to REML in this case
+  if (!is.list(Q)) Q <- list(Q)
   if (!is.list(H)) H <- list(H)
+  
+  
+  
 
   if (scale)
   {
@@ -67,7 +75,8 @@ KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
     }
     else # here is our new method
     {
-        theta.hat <- findTuningParameters(Z.p, Y.p, H, Q)
+        theta.hat <- findTuningParameters(Z.p, Y.p, H, Q, control.outer = control.outer, 
+                                          control.optim = control.optim, use_autograd = use_autograd)
         beta.hat <- computeCoefficientEstimates(Z.p, Y.p, H, Q, theta.hat)
 
         names(beta.hat) <- colnames(Z)

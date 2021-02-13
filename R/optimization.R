@@ -1,4 +1,4 @@
-buildObjectiveFunction <- function(Z.p, Y.p, H, Q, trick = TRUE)
+buildObjectiveFunction <- function(Z.p, Y.p, H, Q)
 {
 
     q <- length(Q)
@@ -13,19 +13,19 @@ buildObjectiveFunction <- function(Z.p, Y.p, H, Q, trick = TRUE)
             H.sum <- abs(theta[2]) * H[[1]]
             for (i in 2:h) H.sum <- H.sum + abs(theta[i+1])*H[[i]]
         }
-        else H.sum <- H[[1]]
+        else H.sum <- torch_tensor(H[[1]])
 
         k <- h > 1
         c_Q <- abs(theta[h+1+k])
         if (q > 1) {
             Q.sum <- abs(theta[h + 2 + k]) * Q[[1]]
-            for (j in 2:q) Q.sum <- Q.sum + abs(theta[h+1+j+k])*Q[[j]]
+            for (j in 2:q) Q.sum <- Q.sum + abs(theta[h+1+j+k]) * Q[[j]]
         }
-        else Q.sum <- Q[[1]]
+        else Q.sum <- torch_tensor(Q[[1]])
 
-        Omega <- c_Q * Z.p %*% Q.sum %*% t(Z.p) + c_H * solve(H.sum)
-        if (trick) ( t(Y.p) %*% solve(Omega) %*% Y.p + fastLogDet(Omega))[1,1]
-        else ( t(Y.p) %*% solve(Omega) %*% Y.p + log(det(Omega)))[1,1]
+        Omega <- c_Q * torch_matmul(torch_matmul(Z.p, Q.sum), t(Z.p)) + c_H * torch_inverse(H.sum)
+        output <- ( torch_matmul(torch_matmul(t(Y.p), torch_inverse(Omega)), Y.p) + torch_logdet(Omega))
+        return(output)
     }
 
 
@@ -46,13 +46,19 @@ equalityConstraintFn <- function(theta, h, q)
     c(z1, z2)
 }
 
-findTuningParameters <- function(Z.p, Y.p, H, Q, trick = TRUE,
-                                 control.outer = list(trace=FALSE, NMinit = TRUE, method = "BFGS"),
-                                 control.optim = list())
+findTuningParameters <- function(Z.p, Y.p, H, Q, 
+                                 control.outer,
+                                 control.optim, use_autograd = TRUE)
 {
     h <- length(H)
     q <- length(Q)
-    fn <- buildObjectiveFunction(Z.p, Y.p, H, Q, trick)
+    fn_raw <- buildObjectiveFunction(Z.p, Y.p, H, Q)
+    fn <- function(x) as.numeric(fn_raw(x))
+    fn_grad <- function(x) {x <- torch_tensor(x, requires_grad = TRUE); 
+        y <- fn_raw(x); 
+        y$backward(); 
+        as.numeric(x$grad)
+    }
     h.theta0 <- 1
     if (h > 1) h.theta0 <- c(h.theta0, rep(1,h) / h)
     q.theta0 <- 1
@@ -61,9 +67,14 @@ findTuningParameters <- function(Z.p, Y.p, H, Q, trick = TRUE,
     eq.fn <- function(x) {equalityConstraintFn(x, h, q)}
     if (h == 1 & q == 1) eq.fn <- NULL
     if (is.null(eq.fn)) opt.out <- optim(par = theta0, fn = fn, method="BFGS")
-    else opt.out <- constrOptim.nl(par = theta0, fn = fn, heq = eq.fn,
+    else {
+        if (use_autograd) opt.out <- constrOptim.nl(par = theta0, fn = fn, gr = fn_grad,heq = eq.fn,
                                    control.outer = control.outer,
                                    control.optim = control.optim)
+        else  opt.out <- constrOptim.nl(par = theta0, fn = fn,heq = eq.fn,
+                                        control.outer = control.outer,
+                                        control.optim = control.optim)
+    }
     k <- h > 1
     sigma <- ifelse(k, abs(opt.out$par[(2:(h+1))]), 1)
     if (k) sigma <- abs(opt.out$par[(2:(h+1))])
