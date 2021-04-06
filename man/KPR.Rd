@@ -12,8 +12,9 @@ KPR(
   Q = diag(ncol(X)),
   scale = FALSE,
   REML = FALSE,
-  control.outer,
-  control.optim
+  control.outer = list(trace = FALSE, NMinit = TRUE, method = "BFGS"),
+  control.optim = list(),
+  use_autograd = TRUE
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ KPR(
 \item{control.outer}{A list of parameters used by the outer loop in `constrOptim.nl`. This is only used when `REML = FALSE`.}
 
 \item{control.optim}{A list of parameters used by the inner loop in `constrOptim.nl`.}
+
+\item{use_autograd}{Logical, indicates whether to use the `torch` library to improve optimization performance.}
 }
 \value{
 \item{beta.hat}{Estimated coefficients for the penalized variables.}
