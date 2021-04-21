@@ -63,7 +63,7 @@ KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
     p <- ncol(Z) # number of penalized variables
 
     if (cov.missing) P <- diag(n)
-    else P <- diag(n) - E %*% solve(t(E) %*% H %*% E) %*% t(E) %*% H # how do we build this projection matrix with multiple H matrices? discuss w Tim
+    else P <- diag(n) - E %*% solve(t(E) %*% H[[1]] %*% E) %*% t(E) %*% H[[1]] # how do we build this projection matrix with multiple H matrices? discuss w Tim
 
     Y.p <- P %*% Y
     Z.p <- P %*% Z # apply P to the variables that should be penalized
@@ -88,10 +88,10 @@ KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
     }
     else
     {
-        h <- length(h)
-        H.sum <- abs(theta.hat$sigma[1]) * H[[1]]
-        if (h > 1) for (i in 2:h) H.sum <- H.sum + abs(theta.hat$sigma[i])*H[[i]]
-        eta.hat <- solve(t(E) %*% H.sum %*% E) %*% t(E) %*% H.sum %*% (Y - Z %*% beta.hat)
+       # h <- length(H)
+       # H.sum <- abs(theta.hat$sigma[1]) * H[[1]]
+       # if (h > 1) for (i in 2:h) H.sum <- H.sum + abs(theta.hat$sigma[i])*H[[i]]
+        eta.hat <- solve(t(E) %*% H[[1]] %*% E) %*% t(E) %*% H[[1]] %*% (Y - Z %*% beta.hat)
         names(eta.hat) <- colnames(E)
     }
     output <- list(X = Z,
