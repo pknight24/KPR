@@ -145,16 +145,10 @@ kpr.out <- inference(kpr.out)
 
 This new `kpr.out` object contains a vector `p.values`, which contains p-values generated with the GMD inference procedure (Wang).
 
-You can also analyze the output of `KPR` with the
-`biplot` function. This will generate a "supervised" biplot using the
-generalized matrix decomposition (Wang), in which the  points
-represent samples and are colored with respect to the outcome
-$\mathbf{Y}$. The arrows plotted represent variables that have been
-selected by the GMD inference (i.e. deemed significant, controlling Type 1 error at
-0.05).
+The KPR package also provides a `GMD.biplot` function (see Wang et al.) for a qualitative analysis of two-way structured data.
 
-```{r fig, fig.height = 5.5, fig.width = 7, fig.align = "center"}
-biplot(kpr.out)
+```{r}
+GMD.biplot(X, Y, Q = Q)
 ```
 
 ## References

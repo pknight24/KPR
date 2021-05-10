@@ -1,39 +1,21 @@
 #' A "supervised" GMD biplot
 #'
-#' This plots a GMD biplot of an object of class \code{KPR}. The axes correspond to first and second
-#' GMD components of the data, as described by Wang et al. \code{biplot.KPR}
-#' performs inference on the \code{KPR} object, and plots arrows corresponding to
-#' penalized variables deemed significant. The points represent samples and are
-#' colored with respect to the response vector \code{Y}.
+#' This plots a GMD biplot where the axes correspond to first and second
+#' GMD components of the data, as described by Wang et al. 
 #'
-#' @param x An object of class \code{KPR}
-#' @param ... Additional parameters, used by the \code{inference} function call.
+#' @param X An n by p data matrix.
+#' @param Y An optional outcome vector. If provided, the points in the biplot will be colored according to the corresponding value in Y.
+#' @param H An n by n sample-wise similarity kernel.
+#' @param Q A p by p variable-wise similarity kernel.
+#' @param K An integer, corresponding to the number of GMD components to compute.
 #' @importFrom viridis plasma
 #' @importFrom graphics arrows axTicks axis plot points text legend
 #' @importFrom stats quantile
 #' @references Wang et al. Technical report.
 #' @export
-biplot.KPR <- function(x, ...)
+GMD.biplot <- function(X, Y = NULL, H = diag(nrow(X)), Q = diag(ncol(X)), K = 10)
 {
-  Z <- x$X
-  H <- x$H
-  Q <- x$Q
-  alpha <- x$alpha
-  sigma <- x$sigma
-  q <- length(Q)
-  h <- length(H)
-
-  # we first need to form the composite H and Q matrices
-  H.sum <- sigma[1] * H[[1]]
-  if (h > 1) for (i in 2:h) H.sum <- H.sum + sigma[i]*H[[i]]
-  Q.sum <- alpha[1] * Q[[1]]
-  if (q > 1) for (j in 2:q) Q.sum <- Q.sum + alpha[j]*Q[[j]]
-
-  H <- H.sum
-  Q <- Q.sum
-
-  K <- 10
-  gmd.out <- GMD(X = Z, H = H, Q = Q, K = K)
+  gmd.out <- GMD(X = X, H = H, Q = Q, K = K)
   U <- gmd.out$U
   S <- gmd.out$S
   V <- gmd.out$V
@@ -56,7 +38,7 @@ biplot.KPR <- function(x, ...)
   max.xlab = max(abs(eta[,1]))
   max.ylab = max(abs(eta[,2]))
 
-  ycolor <- x$Y
+  ycolor <- Y
   order <- findInterval(ycolor, sort(ycolor))
   sample.col = plasma(length(order))[order]
 
@@ -74,8 +56,8 @@ biplot.KPR <- function(x, ...)
   yaxp = axTicks(2)
   
 
-  if (is.null(x$p.values)) signif <- rep(1, ncol(Z)) # if there are no pvalues in the object, use all the coefficients
-  else signif <- which(x$p.values < 0.05) # we keep track of the significant coefficients
+  # if (is.null(x$p.values)) signif <- rep(1, ncol(X)) # if there are no pvalues in the object, use all the coefficients
+  # else signif <- which(x$p.values < 0.05) # we keep track of the significant coefficients
 
   #calculate coordinates
   V.plot = Q%*%V
@@ -88,10 +70,11 @@ biplot.KPR <- function(x, ...)
 
   big.norms <- which(norms > quantile(norms, 0.25)) # we only want the arrows with an L2 norm past the .25 quantile
 
-  index  <- intersect(signif, big.norms)
+  # index  <- intersect(signif, big.norms)
+  index <- big.norms
 
-  if (is.null(colnames(x$Z))) names = paste0("V", index)
-  else names <- colnames(x$Z)[index]
+  if (is.null(colnames(X))) names = paste0("V", index)
+  else names <- colnames(X)[index]
   iter = 1
 
   max.xarrow = max(abs(arrow.x))
@@ -108,24 +91,24 @@ biplot.KPR <- function(x, ...)
   ylab.arrow = round(yaxp*ysci[1]*10^(ysci[2]), digits = 2)
 
   points(eta[,1], eta[,2], col = sample.col, pch = sample.pch)
-
-  legend("topleft", title="Outcome (Y)",
-         legend=c(round(min(x$Y), digits = 3), round(max(x$Y), digits = 3)),
-         col=c(sample.col[which.min(x$Y)], sample.col[which.max(x$Y)]),
+  
+  
+  if (!is.null(Y))
+    legend("topleft", title="Outcome (Y)",
+         legend=c(round(min(Y), digits = 3), round(max(Y), digits = 3)),
+         col=c(sample.col[which.min(Y)], sample.col[which.max(Y)]),
          inset=0.01, pch = sample.pch, cex = 0.75)
 
   for(i in index){
 
-
       arrows(x0 = 0,y0 = 0,x1 = arrow.x[i]/xratio, y1 = arrow.y[i]/yratio, length = 0.05, col = arrow.col)
       text(arrow.x[i]/xratio, arrow.y[i]/yratio*1.1, names[iter], cex = 1, col = legend.col)
 
-    iter = iter + 1
+      iter = iter + 1
   }
 
   # add new axis
   axis(3, at = xaxp, labels = as.character(xlab.arrow))
   axis(4, at = yaxp, labels = as.character(ylab.arrow))
-
 
 }
