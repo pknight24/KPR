@@ -13,7 +13,7 @@ buildObjectiveFunction <- function(Z.p, Y.p, H, Q)
             H.sum <- abs(theta[2]) * H[[1]]
             for (i in 2:h) H.sum <- H.sum + abs(theta[i+1])*H[[i]]
         }
-        else H.sum <- torch_tensor(H[[1]])
+        else H.sum <- H[[1]]
 
         k <- h > 1
         c_Q <- abs(theta[h+1+k])
@@ -21,10 +21,11 @@ buildObjectiveFunction <- function(Z.p, Y.p, H, Q)
             Q.sum <- abs(theta[h + 2 + k]) * Q[[1]]
             for (j in 2:q) Q.sum <- Q.sum + abs(theta[h+1+j+k]) * Q[[j]]
         }
-        else Q.sum <- torch_tensor(Q[[1]])
+        else Q.sum <- Q[[1]]
 
-        Omega <- c_Q * torch_matmul(torch_matmul(Z.p, Q.sum), t(Z.p)) + c_H * torch_inverse(H.sum)
-        output <- ( torch_matmul(torch_matmul(t(Y.p), torch_inverse(Omega)), Y.p) + torch_logdet(Omega))
+        Omega <- c_Q * Z.p%*% Q.sum %*% t(Z.p) + c_H * solve(H.sum)
+        Omega.inv <- solve(Omega)
+        output <-  t(Y.p) %*% Omega.inv %*% Y.p + fastLogDet(Omega)
         return(output)
     }
 
@@ -48,17 +49,12 @@ equalityConstraintFn <- function(theta, h, q)
 
 findTuningParameters <- function(Z.p, Y.p, H, Q, 
                                  control.outer,
-                                 control.optim, use_autograd = TRUE)
+                                 control.optim)
 {
     h <- length(H)
     q <- length(Q)
     fn_raw <- buildObjectiveFunction(Z.p, Y.p, H, Q)
     fn <- function(x) as.numeric(fn_raw(x))
-    fn_grad <- function(x) {x <- torch_tensor(x, requires_grad = TRUE); 
-        y <- fn_raw(x); 
-        y$backward(); 
-        as.numeric(x$grad)
-    }
     h.theta0 <- 1
     if (h > 1) h.theta0 <- c(h.theta0, rep(1,h) / h)
     q.theta0 <- 1
@@ -68,10 +64,7 @@ findTuningParameters <- function(Z.p, Y.p, H, Q,
     if (h == 1 & q == 1) eq.fn <- NULL
     if (is.null(eq.fn)) opt.out <- optim(par = theta0, fn = fn, method="BFGS")
     else {
-        if (use_autograd) opt.out <- constrOptim.nl(par = theta0, fn = fn, gr = fn_grad,heq = eq.fn,
-                                   control.outer = control.outer,
-                                   control.optim = control.optim)
-        else  opt.out <- constrOptim.nl(par = theta0, fn = fn,heq = eq.fn,
+        opt.out <- constrOptim.nl(par = theta0, fn = fn,heq = eq.fn,
                                         control.outer = control.outer,
                                         control.optim = control.optim)
     }

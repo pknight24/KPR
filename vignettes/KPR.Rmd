@@ -50,7 +50,7 @@ $$\hat{\beta} = \mathop{\mathrm{arg\,min}}_{\beta}
 Currently, the only way to install the package is from GitHub.
 
 ```{r, eval=FALSE}
-install.package("devtools")
+install.packages("devtools")
 devtools::install_github("pknight24/KPR")
 ```
 

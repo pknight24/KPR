@@ -1,7 +1,7 @@
 Package: KPR
 Type: Package
 Title: Kernel-penalized regression
-Version: 1.2
+Version: 1.2.1
 Author: Parker Knight
 Maintainer: Parker Knight <pknight24@ufl.edu>
 Description: Fits kernel-penalized regression models.
@@ -14,8 +14,7 @@ Imports:
     glmnet,
     nlme,
     viridis,
-    alabama,
-    torch
+    alabama
 Suggests: 
     knitr,
     rmarkdown,
