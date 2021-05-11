@@ -18,5 +18,6 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    rmdformats
+    rmdformats,
+    markdown
 VignetteBuilder: knitr
