@@ -14,7 +14,8 @@ Imports:
     glmnet,
     nlme,
     viridis,
-    alabama
+    alabama,
+    natural
 Suggests: 
     knitr,
     rmarkdown,

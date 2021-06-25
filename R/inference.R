@@ -80,8 +80,8 @@ inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = FALSE
   Y.tilde = t(L.H)%*%Y.p
 
   ### using natural lasso method
-  ##olasso.fit = natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)
-  ##sigmaepsi.hat = olasso.fit$sig_obj
+  olasso.fit = natural::olasso(Z.tilde, Y.tilde)
+  sigmaepsi.hat = olasso.fit$sig_obj_1
   ##for (i in 1:49) sigmaepsi.hat <- c(sigmaepsi.hat,
   ##                                    natural::olasso_cv(Z.tilde, Y.tilde, nfold = 3)$sig_obj)
   ##sigmaepsi.hat <- median(sigmaepsi.hat)
@@ -106,7 +106,7 @@ inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = FALSE
   cov.hat = Q%*%V%*%diag(D^(-2)*W*W)%*%t(V)%*%Q
   diag.cov.hat = diag(cov.hat)
   bound.mat = (Q%*%V%*%diag(W)%*%t(V) - (1- mu)*diag(Xi) - mu*diag(rep(1,p)))%*%vectors.Q
-  bound.hat = apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
+  bound.hat = sigmaepsi.hat * apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
 
   # p-values
   beta.temp = abs(beta.hat) - bound.hat
