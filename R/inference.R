@@ -76,7 +76,7 @@ inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = FALSE
   vectors.Q = eigen.Q$vectors[, eigen.Q$values > 0]
   L.Q = vectors.Q%*%diag(sqrt(values.Q))
 
-  Z.tilde = t(L.H)%*%Z.p%*%vectors.Q
+  Z.tilde = t(L.H)%*%Z.p%*%L.Q
   Y.tilde = t(L.H)%*%Y.p
 
   ### using natural lasso method
@@ -106,7 +106,7 @@ inference <- function(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = FALSE
   cov.hat = Q%*%V%*%diag(D^(-2)*W*W)%*%t(V)%*%Q
   diag.cov.hat = diag(cov.hat)
   bound.mat = (Q%*%V%*%diag(W)%*%t(V) - (1- mu)*diag(Xi) - mu*diag(rep(1,p)))%*%vectors.Q
-  bound.hat = sigmaepsi.hat * apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
+  bound.hat = sigmaepsi.hat^2 * apply(bound.mat, 1, function(x){max(abs(x))})*(log(p)/n)^(0.5 - r) # sparsity parameter
 
   # p-values
   beta.temp = abs(beta.hat) - bound.hat
