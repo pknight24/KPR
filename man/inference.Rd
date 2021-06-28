@@ -23,6 +23,7 @@ inference(KPR.output, mu = 1, r = 0.05, weight = TRUE, scale = FALSE, ...)
 An object of classes KPR with the following fields added:
 \item{p.values}{P-values for each penalized coefficient, resulting from the GMD inference.}
 \item{bound}{The stochastic bound used to compute each p-value.}
+\item{sigmaepsi.hat}{The estimated standard deviation of epsilon.}
 }
 \description{
 Running the GMD inference on a KPR model
