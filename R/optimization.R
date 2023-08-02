@@ -1,4 +1,4 @@
-buildObjectiveFunction <- function(Z.p, Y.p, H, Q)
+buildObjectiveFunction <- function(Z.p, Y.p, H, Q, Q.inv)
 {
 
     q <- length(Q)
@@ -22,6 +22,8 @@ buildObjectiveFunction <- function(Z.p, Y.p, H, Q)
             for (j in 2:q) Q.sum <- Q.sum + abs(theta[h+1+j+k]) * Q[[j]]
         }
         else Q.sum <- Q[[1]]
+
+        if (!Q.inv) Q.sum <- solve(Q.sum)
 
         Omega <- c_Q * Z.p%*% Q.sum %*% t(Z.p) + c_H * solve(H.sum)
         Omega.inv <- solve(Omega)
@@ -47,7 +49,7 @@ equalityConstraintFn <- function(theta, h, q)
     c(z1, z2)
 }
 
-findTuningParameters <- function(Z.p, Y.p, H, Q, 
+findTuningParameters <- function(Z.p, Y.p, H, Q, Q.inv,
                                  control.outer,
                                  control.optim)
 {
@@ -82,7 +84,7 @@ findTuningParameters <- function(Z.p, Y.p, H, Q,
 }
 
 
-computeCoefficientEstimates <- function(Z.p, Y.p, H, Q, theta.hat)
+computeCoefficientEstimates <- function(Z.p, Y.p, H, Q, theta.hat, Q.inv)
 {
     h <- length(H)
     q <- length(Q)
@@ -94,7 +96,11 @@ computeCoefficientEstimates <- function(Z.p, Y.p, H, Q, theta.hat)
 
     lambda <- theta.hat$c_H / theta.hat$c_Q
 
-    # solve(t(Z.p) %*% ( (1 / theta.hat$c_H) * H.sum) %*% Z.p + (1 / theta.hat$c_Q) * Q.sum) %*% t(Z.p) %*% ( (1 / theta.hat$c_H) * H.sum) %*% Y.p
+    # solve(t(Z.p) %*% ( (1 / theta.hat$c_H) * H.sum) %*% Z.p + (1 /
+    # theta.hat$c_Q) * Q.sum) %*% t(Z.p) %*% ( (1 / theta.hat$c_H) * H.sum) %*%
+    # Y.p
+    
+    if (!Q.inv) Q.sum <- solve(Q.sum)
 
     Q.sum %*% solve(t(Z.p) %*% H.sum %*% Z.p %*% Q.sum + lambda * diag(ncol(Z.p))) %*% t(Z.p) %*% H.sum %*% Y.p
 

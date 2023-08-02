@@ -9,6 +9,7 @@
 #' @param Q A list of p x p variable similarity kernels. If only one matrix is included in the model, it does not need to be wrapped as a list. All matrices must be symmetric positive semidefinite. This defaults to a single identity matrix.
 #' @param scale Logical, indicates whether to scale all the Q's, H's and the design matrix to have a spectral norm of 1.
 #' @param REML Logical, indicates whether to use REML estimation for finding the parameters. This will only work with a single H and Q matrix, and is the preferred method in this case.
+#' @param Q.inv Logical, indicates whether to penalize Q_composite or Q_composite inverse.
 #' @param control.outer A list of parameters used by the outer loop in `constrOptim.nl`. This is only used when `REML = FALSE`.
 #' @param control.optim A list of parameters used by the inner loop in `constrOptim.nl`.
 #' @return
@@ -25,7 +26,7 @@
 #' (\href{https://projecteuclid.org/euclid.aoas/1520564483}{Project Euclid})
 #' @export
 KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
-                scale = FALSE, REML = FALSE, control.outer = list(trace=FALSE, NMinit = TRUE, method = "BFGS"), 
+                scale = FALSE, REML = FALSE, Q.inv = TRUE, control.outer = list(trace=FALSE, NMinit = TRUE, method = "BFGS"), 
                 control.optim = list())
 {
   
@@ -73,9 +74,9 @@ KPR <- function(X, E = NULL, Y, H = diag(nrow(X)), Q = diag(ncol(X)),
     }
     else # here is our new method
     {
-        theta.hat <- findTuningParameters(Z.p, Y.p, H, Q, control.outer = control.outer, 
+        theta.hat <- findTuningParameters(Z.p, Y.p, H, Q, Q.inv = Q.inv, control.outer = control.outer, 
                                           control.optim = control.optim)
-        beta.hat <- computeCoefficientEstimates(Z.p, Y.p, H, Q, theta.hat)
+        beta.hat <- computeCoefficientEstimates(Z.p, Y.p, H, Q, theta.hat, Q.inv = Q.inv)
 
         names(beta.hat) <- colnames(Z)
     }

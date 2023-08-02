@@ -12,6 +12,7 @@ KPR(
   Q = diag(ncol(X)),
   scale = FALSE,
   REML = FALSE,
+  Q.inv = TRUE,
   control.outer = list(trace = FALSE, NMinit = TRUE, method = "BFGS"),
   control.optim = list()
 )
@@ -30,6 +31,8 @@ KPR(
 \item{scale}{Logical, indicates whether to scale all the Q's, H's and the design matrix to have a spectral norm of 1.}
 
 \item{REML}{Logical, indicates whether to use REML estimation for finding the parameters. This will only work with a single H and Q matrix, and is the preferred method in this case.}
+
+\item{Q.inv}{Logical, indicates whether to penalize Q_composite or Q_composite inverse.}
 
 \item{control.outer}{A list of parameters used by the outer loop in `constrOptim.nl`. This is only used when `REML = FALSE`.}
 
